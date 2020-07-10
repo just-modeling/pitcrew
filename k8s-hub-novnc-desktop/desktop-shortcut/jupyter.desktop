@@ -1,0 +1,8 @@
+[Desktop Entry]
+Encoding=UTF-8
+Name=JupyterLab
+Exec=/usr/bin/firefox http://jupyter.dii.hhs.info:8080
+Type=Application
+Terminal=false
+Icon=/etc/app-icons/jupyter_desktop.png
+MimeType=text/html;text/xml;application/xhtml_xml;x-scheme-handler/http;x-scheme-handler/https;x-scheme-handler/ftp;

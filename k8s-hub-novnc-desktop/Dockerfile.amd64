@@ -1,0 +1,171 @@
+# Built with arch: amd64 flavor: lxde image: ubuntu:18.04
+#
+################################################################################
+# base system
+################################################################################
+
+FROM ubuntu:18.04 as system
+
+
+
+RUN sed -i 's#http://archive.ubuntu.com/ubuntu/#mirror://mirrors.ubuntu.com/mirrors.txt#' /etc/apt/sources.list; 
+
+
+# built-in packages
+ENV DEBIAN_FRONTEND noninteractive
+RUN apt update \
+    && apt install -y --no-install-recommends software-properties-common curl apache2-utils \
+    && apt update \
+    && apt install -y --no-install-recommends --allow-unauthenticated \
+        supervisor nginx sudo net-tools zenity xz-utils \
+        dbus-x11 x11-utils alsa-utils \
+        mesa-utils libgl1-mesa-dri \
+    && apt autoclean -y \
+    && apt autoremove -y \
+    && rm -rf /var/lib/apt/lists/*
+# install debs error if combine together
+RUN add-apt-repository -y ppa:fcwu-tw/apps \
+    && apt update \
+    && apt install -y --no-install-recommends --allow-unauthenticated \
+        xvfb x11vnc=0.9.16-1 \
+        vim-tiny firefox chromium-browser ttf-ubuntu-font-family ttf-wqy-zenhei  \
+    && add-apt-repository -r ppa:fcwu-tw/apps \
+    && apt autoclean -y \
+    && apt autoremove -y \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN apt update \
+    && apt install -y --no-install-recommends --allow-unauthenticated \
+        lxde gtk2-engines-murrine gnome-themes-standard gtk2-engines-pixbuf gtk2-engines-murrine arc-theme \
+    && apt autoclean -y \
+    && apt autoremove -y \
+    && rm -rf /var/lib/apt/lists/*
+ 
+ 
+# Additional packages require ~600MB
+# libreoffice  pinta language-pack-zh-hant language-pack-gnome-zh-hant firefox-locale-zh-hant libreoffice-l10n-zh-tw
+
+# tini to fix subreap
+ARG TINI_VERSION=v0.18.0
+ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /bin/tini
+RUN chmod +x /bin/tini
+
+# ffmpeg
+RUN apt update \
+    && apt install -y --no-install-recommends --allow-unauthenticated \
+        ffmpeg \
+    && rm -rf /var/lib/apt/lists/* \
+    && mkdir /usr/local/ffmpeg \
+    && ln -s /usr/bin/ffmpeg /usr/local/ffmpeg/ffmpeg
+
+# python library
+COPY rootfs/usr/local/lib/web/backend/requirements.txt /tmp/
+RUN apt-get update \
+    && dpkg-query -W -f='${Package}\n' > /tmp/a.txt \
+    && apt-get install -y python-pip python-dev build-essential vim git ssh \
+	&& pip install setuptools wheel && pip install -r /tmp/requirements.txt \
+    && dpkg-query -W -f='${Package}\n' > /tmp/b.txt \
+    && apt-get remove -y `diff --changed-group-format='%>' --unchanged-group-format='' /tmp/a.txt /tmp/b.txt | xargs` \
+    && apt-get autoclean -y \
+    && apt-get autoremove -y \
+    && rm -rf /var/lib/apt/lists/* \
+    && rm -rf /var/cache/apt/* /tmp/a.txt /tmp/b.txt
+
+
+################################################################################
+# builder
+################################################################################
+FROM ubuntu:18.04 as builder
+
+
+RUN sed -i 's#http://archive.ubuntu.com/ubuntu/#mirror://mirrors.ubuntu.com/mirrors.txt#' /etc/apt/sources.list; 
+
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends curl ca-certificates gnupg patch vim git ssh
+
+# nodejs
+RUN curl -sL https://deb.nodesource.com/setup_8.x | bash - \
+    && apt-get install -y nodejs
+
+# yarn
+RUN curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add - \
+    && echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list \
+    && apt-get update \
+    && apt-get install -y yarn
+
+# build frontend
+COPY web /src/web
+RUN cd /src/web \
+    && yarn \
+    && yarn build
+
+
+
+################################################################################
+# merge
+################################################################################
+FROM system
+LABEL maintainer="fcwu.tw@gmail.com"
+ARG NB_USER="jovyan"
+ARG NB_UID="1000"
+ARG NB_GID="100"
+
+RUN apt-get update && apt-get install -y --no-install-recommends vim git ssh
+
+COPY --from=builder /src/web/dist/ /usr/local/lib/web/frontend/
+COPY rootfs /
+RUN ln -sf /usr/local/lib/web/frontend/static/websockify /usr/local/lib/web/frontend/static/novnc/utils/websockify && \
+	chmod +x /usr/local/lib/web/frontend/static/websockify/run
+
+## Make directories writable to root group
+# Add a script that we will use to correct permissions after running certain commands
+ADD fix-permissions /usr/local/bin/fix-permissions
+
+# Configure environment
+ENV NB_USER=$NB_USER \
+    NB_UID=$NB_UID \
+    NB_GID=$NB_GID
+ENV USER=$NB_USER \
+    GROUP=$NB_UID \
+    PASSWORD=password
+ENV PATH=/:$PATH \
+    HOME=/home/jovyan
+
+# home folder
+RUN mkdir $HOME && \
+    mkdir -p $HOME/Desktop && \
+    mkdir -p $HOME/.config/pcmanfm/LXDE/ && \
+    ln -sf /usr/local/share/doro-lxde-wallpapers/desktop-items-0.conf $HOME/.config/pcmanfm/LXDE/
+
+COPY desktop-shortcut $HOME/Desktop
+COPY app-icons /etc/app-icons
+
+RUN echo "auth requisite pam_deny.so" >> /etc/pam.d/su && \
+    sed -i.bak -e 's/^%admin/#%admin/' /etc/sudoers && \
+    sed -i.bak -e 's/^%sudo/#%sudo/' /etc/sudoers && \
+    useradd -m -s /bin/bash -N -u $NB_UID $NB_USER && \
+    groupadd -g $NB_GID -o ${NB_GROUP:-${NB_USER}} && \
+    usermod  -g $NB_GID -aG 100 $NB_USER && \
+    chown -R $NB_USER:$NB_GID $HOME && \
+    chmod g+w /etc/passwd && \
+    ## If grant NB_USER passwordless sudo access
+    # echo "$NB_USER ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/notebook && \
+    fix-permissions $HOME && \
+    fix-permissions /etc/supervisor && \ 
+    fix-permissions /etc/nginx && \ 
+    fix-permissions /var && \ 
+    fix-permissions /run && \
+    #fix-permissions /dev && \
+    fix-permissions /bin && \
+    fix-permissions /usr/local/bin
+
+
+EXPOSE 8888
+WORKDIR $HOME
+
+HEALTHCHECK --interval=30s --timeout=5s CMD curl --fail http://127.0.0.1:6079/api/health
+
+# Configure container startup
+ENTRYPOINT ["tini", "-g", "--"]
+CMD ["startup"]

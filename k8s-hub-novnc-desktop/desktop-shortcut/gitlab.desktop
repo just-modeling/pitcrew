@@ -1,0 +1,8 @@
+[Desktop Entry]
+Encoding=UTF-8
+Name=GitLab
+Exec=/usr/bin/firefox https://gitlab.hhs-projects.com
+Type=Application
+Terminal=false
+Icon=/etc/app-icons/gitlab_desktop.png
+MimeType=text/html;text/xml;application/xhtml_xml;x-scheme-handler/http;x-scheme-handler/https;x-scheme-handler/ftp;

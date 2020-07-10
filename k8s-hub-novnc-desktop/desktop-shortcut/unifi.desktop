@@ -1,0 +1,8 @@
+[Desktop Entry]
+Encoding=UTF-8
+Name=Unifi Data Catalog
+Exec=/usr/bin/firefox http://unifi.dii.hhs.info:8082/datasets
+Type=Application
+Terminal=false
+Icon=/etc/app-icons/unifi_desktop.png
+MimeType=text/html;text/xml;application/xhtml_xml;x-scheme-handler/http;x-scheme-handler/https;x-scheme-handler/ftp;

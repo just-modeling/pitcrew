@@ -1,0 +1,8 @@
+[Desktop Entry]
+Encoding=UTF-8
+Name=PGAdmin4
+Exec=/usr/bin/firefox http://localhost:5050
+Type=Application
+Terminal=false
+Icon=/etc/app-icons/pgadmin_desktop.png
+MimeType=text/html;text/xml;application/xhtml_xml;x-scheme-handler/http;x-scheme-handler/https;x-scheme-handler/ftp;
