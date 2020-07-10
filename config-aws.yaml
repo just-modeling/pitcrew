@@ -1,0 +1,125 @@
+hub:
+  cookieSecret: 98a089a34637d725efa49d780b2d324428211a81a51a30913985793507f086d8
+  db:
+    type: postgres
+    url: postgres+psycopg2://postgresadmin:2020AdminPasswordIsImportant@dev-hhs-db-cluster.cluster-ca9ivypmpxdr.us-east-1.rds.amazonaws.com:5432/hhs_hub
+    upgrade: true
+  image: 
+    name: 446516249306.dkr.ecr.us-east-1.amazonaws.com/k8s-hub
+    tag: latest
+  imagePullPolicy: 'Always'
+  extraConfig:
+    logo: |
+      c.JupyterHub.logo_file = '/usr/local/share/jupyterhub/static/images/DataInsightsInitiative.png'
+    jupyterlab: |
+      c.JupyterHub.authenticator_class = 'dummyauthenticator.DummyAuthenticator'
+      c.KubeSpawner.start_timeout = 3600
+    admin_user: |
+      c.JupyterHub.admin_access = True
+      c.Authenticator.admin_users = {'apiuser','ziang'}
+      c.JupyterHub.api_tokens = {'97bbf5d910d0c6d06be880441633953445f6965a78d25b54694f5e26374ffc6a': 'apiuser'}
+    spawner: |
+      from kubespawner import KubeSpawner
+      from kubernetes.client.rest import ApiException
+      from jupyterhub.utils import exponential_backoff
+      from jupyterhub.orm import Group
+      from jinja2 import Environment, BaseLoader
+      from tornado import gen
+      class CustomKubeSpawner(KubeSpawner):
+          async def options_form(self, spawner):
+              projects = [
+                {
+                  'image': '446516249306.dkr.ecr.us-east-1.amazonaws.com/novnc-notebook:latest',
+                  'display_name': 'Linux Virtual Desktop',
+                  'description':'test K8s NOVNC Desktop Spawner',
+                }
+              ]
+              p_list = []
+              default = True
+              for p in projects:
+                  pull_policy = 'Always'
+                  # construct the project space list
+                  p_list.append(
+                      {'display_name':p['display_name'],'description': p['description'], 'default': default,
+                       'kubespawner_override': 
+                         {
+                              'image': p['image'],
+                              'cmd': ['startup'],
+                              'image_pull_policy': pull_policy,
+                              'cpu_limit': 2,
+                              'cpu_guarantee': 0.5,
+                              'mem_limit': '4G',
+                              'mem_guarantee': '1G',
+                              'volumes': [
+                                {'name': 'project-claim','persistentVolumeClaim': {'claimName': 'hhs-projects'}},
+                                {'name': 'user-claim','persistentVolumeClaim': {'claimName': 'hhs-users'}},
+                              ],
+                              'volume_mounts': [
+                                {'name': 'project-claim','mountPath': '/home/jovyan/Desktop/shared'},
+                                {'name': 'user-claim','mountPath': '/home/jovyan/Desktop/work'}
+                              ],
+                              'extra_containers': [{
+                                  'name': 'jupyterlab',
+                                  'image': '446516249306.dkr.ecr.us-east-1.amazonaws.com/datascience-notebook:latest',
+                                  'command': ['start-notebook.sh'],
+                                  'imagePullPolicy': pull_policy,
+                                  'volumeMounts': [
+                                    {'name': 'project-claim','mountPath': '/home/jovyan/shared'},
+                                    {'name': 'user-claim','mountPath': '/home/jovyan/work'}
+                                  ]
+                                },
+                                {
+                                  'name': 'theia-vscode',
+                                  'image': '446516249306.dkr.ecr.us-east-1.amazonaws.com/theia-vscode:latest',
+                                  'imagePullPolicy': pull_policy,
+                                  'volumeMounts': [
+                                    {'name': 'project-claim','mountPath': '/home/jovyan/shared'},
+                                    {'name': 'user-claim','mountPath': '/home/jovyan/work'}
+                                  ]
+                                },
+                                {
+                                  'name': 'pgadmin4',
+                                  'image': '446516249306.dkr.ecr.us-east-1.amazonaws.com/pgadmin4:latest',
+                                  'imagePullPolicy': pull_policy,
+                                  'command': ['/entrypoint.sh'],
+                                  'env': [{'name':'PGADMIN_DEFAULT_EMAIL', 'value':'admin@pgadmin4.dii.hhs.info'}, 
+                                          {'name':'PGADMIN_DEFAULT_PASSWORD', 'value':'admin'}, 
+                                          {'name':'PGADMIN_LISTEN_PORT', 'value':'5050'},
+                                          {'name':'PGADMIN_CONFIG_SERVER_MODE','value':'False'}],
+                                  # 'volumeMounts': [
+                                  #   {'name': 'user-claim','mountPath': '/var/lib/pgadmin'}
+                                  # ]
+                                },
+                                {
+                                  'name': 'unifi',
+                                  'image': '446516249306.dkr.ecr.us-east-1.amazonaws.com/unifi:latest',
+                                  'imagePullPolicy': pull_policy,
+                                }
+                              ]
+                          }
+                      }
+                  )
+                  default = False
+              self.profile_list = p_list
+              self._profile_list = p_list
+              profile_form_template = Environment(loader=BaseLoader).from_string(self.profile_form_template)
+              return profile_form_template.render(profile_list=p_list)
+      c.JupyterHub.spawner_class = CustomKubeSpawner
+    hostaliases: |
+      c.KubeSpawner.extra_pod_config={'hostAliases': [{'ip': '127.0.0.1', 'hostnames':['jupyter.dii.hhs.info','vscode.dii.hhs.info','pgadmin4.dii.hhs.info', 'unifi.dii.hhs.info']}]}
+cull:
+  enabled: true
+  timeout: 3600
+  every: 300
+    
+proxy:
+  secretToken: 97bbf5d910d0c6d06be880441633953445f6965a78d25b54694f5e26374ffc6a
+#  service:
+#    type: LoadBalancer
+#    annotations:
+#      service.beta.kubernetes.io/azure-load-balancer-internal: "true"
+  https:
+    hosts:
+      - a39686dde295540d0900ee484cefbf67-2041003266.us-east-1.elb.amazonaws.com
+    letsencrypt:
+      contactEmail: zjia@ksmconsulting.com

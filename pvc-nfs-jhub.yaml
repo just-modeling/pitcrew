@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: hhs-projects
+  namespace: hhs-jhub
+spec:
+  accessModes:
+    - ReadWriteMany
+  volumeMode: Filesystem
+  resources:
+    requests:
+      storage: 40Gi
+  storageClassName: hhs-nfs
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: hhs-users
+  namespace: hhs-jhub
+spec:
+  accessModes:
+    - ReadWriteMany
+  volumeMode: Filesystem
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: hhs-nfs

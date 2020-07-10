@@ -1,0 +1,75 @@
+###### Persistent Volume
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-test-jhub-project
+  labels:
+    usage: pv-test-jhub-project
+spec:
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  azureFile:
+    secretName: azure-fileshare-secret
+    shareName: sc-test-jhub-project
+    readOnly: false
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-test-jhub-user
+  labels:
+    usage: pv-test-jhub-user
+spec:
+  capacity:
+    storage: 2Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  azureFile:
+    secretName: azure-fileshare-secret
+    shareName: sc-test-jhub-user
+    readOnly: false
+###### Persistent Volume Claim
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pvc-test-jhub-project
+  namespace: hhs-jhub
+  # Set this annotation to NOT let Kubernetes automatically create
+  # a persistent volume for this volume claim.
+  annotations:
+    volume.beta.kubernetes.io/storage-class: ""
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 10Gi
+  selector:
+    # To make sure we match the claim with the exact volume, match the label
+    matchLabels:
+      usage: pv-test-jhub-project
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pvc-test-jhub-user
+  namespace: hhs-jhub
+  # Set this annotation to NOT let Kubernetes automatically create
+  # a persistent volume for this volume claim.
+  annotations:
+    volume.beta.kubernetes.io/storage-class: ""
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+  selector:
+    # To make sure we match the claim with the exact volume, match the label
+    matchLabels:
+      usage: pv-test-jhub-user

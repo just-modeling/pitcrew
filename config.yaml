@@ -1,0 +1,118 @@
+hub:
+  cookieSecret: 98a089a34637d725efa49d780b2d324428211a81a51a30913985793507f086d8
+  db:
+    type: postgres
+    url: postgres+psycopg2://mphhubadmin@mphhubdbs1:Simple123!@mphhubdbs1.postgres.database.azure.com:5432/hhs_hub
+    upgrade: true
+  extraEnv:
+    AAD_TENANT_ID: "50225b46-8a5b-4a27-b140-349ac9c7b83c"
+  image: 
+    name: novncacr.azurecr.io/k8s-hub
+    tag: latest
+  imagePullPolicy: 'Always'
+  extraConfig:
+    logo: |
+      c.JupyterHub.logo_file = '/usr/local/share/jupyterhub/static/images/DataInsightsInitiative.png'
+    jupyterlab: |
+      c.JupyterHub.authenticator_class = 'dummyauthenticator.DummyAuthenticator'
+      c.KubeSpawner.start_timeout = 3600
+    admin_user: |
+      c.JupyterHub.admin_access = True
+      c.Authenticator.admin_users = {'apiuser','ziang'}
+      c.JupyterHub.api_tokens = {'97bbf5d910d0c6d06be880441633953445f6965a78d25b54694f5e26374ffc6a': 'apiuser'}
+    spawner: |
+      from kubespawner import KubeSpawner
+      from jupyterhub.orm import Group
+      from jinja2 import Environment, BaseLoader
+      class CustomKubeSpawner(KubeSpawner):
+          async def options_form(self, spawner):
+              projects = [
+                {
+                  'image': 'novncacr.azurecr.io/novnc-notebook:latest',
+                  'display_name': 'Linux Virtual Desktop',
+                  'description':'test K8s NOVNC Desktop Spawner',
+                }
+              ]
+              p_list = []
+              default = True
+              for p in projects:
+                  pull_policy = 'Always'
+                  lifecycle_hooks = {}
+                  # construct the project space list
+                  p_list.append(
+                      {'display_name':p['display_name'],'description': p['description'], 'default': default,
+                       'kubespawner_override': 
+                         {
+                              'image': p['image'],
+                              'cmd': ['startup'],
+                              'image_pull_policy': pull_policy,
+                              'cpu_limit': 2,
+                              'cpu_guarantee': 0.5,
+                              'mem_limit': '4G',
+                              'mem_guarantee': '2G',
+                              'volumes': [
+                                {'name': 'project-claim','persistentVolumeClaim': {'claimName': 'pvc-test-jhub-project'}},
+                                {'name': 'user-claim','persistentVolumeClaim': {'claimName': 'pvc-test-jhub-user'}},
+                              ],
+                              'volume_mounts': [
+                                {'name': 'project-claim','mountPath': '/home/jovyan/Desktop/shared'}
+                              ],
+                              'lifecycle_hooks': lifecycle_hooks,
+                              'extra_containers': [{
+                                  'name': 'jupyterlab',
+                                  'image': 'novncacr.azurecr.io/datascience-notebook:latest',
+                                  'command': ['start-notebook.sh'],
+                                  'imagePullPolicy': pull_policy,
+                                  'volumeMounts': [
+                                    {'name': 'project-claim','mountPath': '/home/jovyan/shared'}
+                                  ]
+                                },
+                                {
+                                  'name': 'theia-vscode',
+                                  'image': 'novncacr.azurecr.io/theia-vscode:latest',
+                                  'imagePullPolicy': pull_policy,
+                                  'volumeMounts': [
+                                    {'name': 'project-claim','mountPath': '/home/jovyan/shared'}
+                                  ]
+                                },
+                                {
+                                  'name': 'pgadmin4',
+                                  'image': 'novncacr.azurecr.io/pgadmin4:latest',
+                                  'imagePullPolicy': pull_policy,
+                                  'command': ['/entrypoint.sh'],
+                                  'env': [{'name':'PGADMIN_DEFAULT_EMAIL', 'value':'admin@pgadmin4.dii.hhs.info'}, 
+                                          {'name':'PGADMIN_DEFAULT_PASSWORD', 'value':'admin'}, 
+                                          {'name':'PGADMIN_LISTEN_PORT', 'value':'5050'},
+                                          {'name':'PGADMIN_CONFIG_SERVER_MODE','value':'False'}],
+                                  # 'volumeMounts': [
+                                  #   {'name': 'user-claim','mountPath': '/var/lib/pgadmin'}
+                                  # ]
+                                },
+                              ]
+                          }
+                      }
+                  )
+                  default = False
+              self.profile_list = p_list
+              self._profile_list = p_list
+              profile_form_template = Environment(loader=BaseLoader).from_string(self.profile_form_template)
+              return profile_form_template.render(profile_list=p_list)
+      c.JupyterHub.spawner_class = CustomKubeSpawner
+    hostaliases: |
+      c.KubeSpawner.extra_pod_config={'hostAliases': [{'ip': '127.0.0.1', 'hostnames':['jupyter.dii.hhs.info','vscode.dii.hhs.info','pgadmin4.dii.hhs.info']},]}
+cull:
+  enabled: true
+  timeout: 3600
+  every: 300
+    
+proxy:
+  secretToken: 97bbf5d910d0c6d06be880441633953445f6965a78d25b54694f5e26374ffc6a
+#  service:
+#    type: LoadBalancer
+#    annotations:
+#      service.beta.kubernetes.io/azure-load-balancer-internal: "true"
+  # https:
+  #   hosts:
+  #     - hhs-analyticshub.eastus2.cloudapp.azure.com
+  #   letsencrypt:
+  #     contactEmail: zjia@ksmconsulting.com
