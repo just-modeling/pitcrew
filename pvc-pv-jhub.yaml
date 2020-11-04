@@ -38,7 +38,7 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: pvc-test-jhub-project
-  namespace: hhs-jhub
+  namespace: ddapr-jhub
   # Set this annotation to NOT let Kubernetes automatically create
   # a persistent volume for this volume claim.
   annotations:
@@ -58,7 +58,7 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: pvc-test-jhub-user
-  namespace: hhs-jhub
+  namespace: ddapr-jhub
   # Set this annotation to NOT let Kubernetes automatically create
   # a persistent volume for this volume claim.
   annotations:
