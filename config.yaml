@@ -7,12 +7,10 @@ hub:
   extraEnv:
     AAD_TENANT_ID: "50225b46-8a5b-4a27-b140-349ac9c7b83c"
   image: 
-    name: novncacr.azurecr.io/k8s-hub
+    name: ddaprcacr.azurecr.io/k8s-hub
     tag: latest
   imagePullPolicy: 'Always'
   extraConfig:
-    logo: |
-      c.JupyterHub.logo_file = '/usr/local/share/jupyterhub/static/images/DataInsightsInitiative.png'
     jupyterlab: |
       c.JupyterHub.authenticator_class = 'dummyauthenticator.DummyAuthenticator'
       c.KubeSpawner.start_timeout = 3600
@@ -22,15 +20,14 @@ hub:
       c.JupyterHub.api_tokens = {'97bbf5d910d0c6d06be880441633953445f6965a78d25b54694f5e26374ffc6a': 'apiuser'}
     spawner: |
       from kubespawner import KubeSpawner
-      from jupyterhub.orm import Group
       from jinja2 import Environment, BaseLoader
       class CustomKubeSpawner(KubeSpawner):
           async def options_form(self, spawner):
               projects = [
                 {
-                  'image': 'novncacr.azurecr.io/novnc-notebook:latest',
+                  'image': 'ddaprcacr.azurecr.io/novnc-notebook:latest',
                   'display_name': 'Linux Virtual Desktop',
-                  'description':'test K8s NOVNC Desktop Spawner',
+                  'description':'K8s NOVNC Desktop Spawner',
                 }
               ]
               p_list = []
@@ -60,7 +57,7 @@ hub:
                               'lifecycle_hooks': lifecycle_hooks,
                               'extra_containers': [{
                                   'name': 'jupyterlab',
-                                  'image': 'novncacr.azurecr.io/datascience-notebook:latest',
+                                  'image': 'ddaprcacr.azurecr.io/datascience-notebook:latest',
                                   'command': ['start-notebook.sh'],
                                   'imagePullPolicy': pull_policy,
                                   'volumeMounts': [
@@ -69,7 +66,7 @@ hub:
                                 },
                                 {
                                   'name': 'theia-vscode',
-                                  'image': 'novncacr.azurecr.io/theia-vscode:latest',
+                                  'image': 'ddaprcacr.azurecr.io/theia-vscode:latest',
                                   'imagePullPolicy': pull_policy,
                                   'volumeMounts': [
                                     {'name': 'project-claim','mountPath': '/home/jovyan/shared'}
@@ -77,7 +74,7 @@ hub:
                                 },
                                 {
                                   'name': 'pgadmin4',
-                                  'image': 'novncacr.azurecr.io/pgadmin4:latest',
+                                  'image': 'ddaprcacr.azurecr.io/pgadmin4:latest',
                                   'imagePullPolicy': pull_policy,
                                   'command': ['/entrypoint.sh'],
                                   'env': [{'name':'PGADMIN_DEFAULT_EMAIL', 'value':'admin@pgadmin4.dii.hhs.info'}, 
@@ -107,12 +104,8 @@ cull:
     
 proxy:
   secretToken: 97bbf5d910d0c6d06be880441633953445f6965a78d25b54694f5e26374ffc6a
-#  service:
-#    type: LoadBalancer
-#    annotations:
-#      service.beta.kubernetes.io/azure-load-balancer-internal: "true"
-  # https:
-  #   hosts:
-  #     - hhs-analyticshub.eastus2.cloudapp.azure.com
-  #   letsencrypt:
-  #     contactEmail: zjia@ksmconsulting.com
+  https:
+    hosts:
+      - ddapr-analytic-hub.eastus.cloudapp.azure.com
+    letsencrypt:
+      contactEmail: zjia@ksmconsulting.com
