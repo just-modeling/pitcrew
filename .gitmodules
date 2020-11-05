@@ -1,8 +1,0 @@
-[submodule "k8s-hub-novnc-desktop/web/static/noVNC"]
-	path = k8s-hub-novnc-desktop/web/static/noVNC
-	url = https://github.com/Jiaza492/noVNC.git
-	branch = k8s-hub-novnc-desktop
-[submodule "k8s-hub-novnc-desktop/web/static/websockify"]
-	path = k8s-hub-novnc-desktop/web/static/websockify
-	url = https://github.com/Jiaza492/websockify.git
-	branch = k8s-hub-novnc-desktop
