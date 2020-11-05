@@ -1,15 +1,17 @@
 hub:
   cookieSecret: 98a089a34637d725efa49d780b2d324428211a81a51a30913985793507f086d8
-  db:
-    type: postgres
-    url: postgres+psycopg2://mphhubadmin@mphhubdbs1:Simple123!@mphhubdbs1.postgres.database.azure.com:5432/hhs_hub
-    upgrade: true
+  # db:
+  #   type: postgres
+  #   url: postgres+psycopg2://mphhubadmin@mphhubdbs1:Simple123!@mphhubdbs1.postgres.database.azure.com:5432/hhs_hub
+  #   upgrade: true
   extraEnv:
     AAD_TENANT_ID: "50225b46-8a5b-4a27-b140-349ac9c7b83c"
   image: 
-    name: ddaprcacr.azurecr.io/k8s-hub
+    name: ddapracr.azurecr.io/k8s-hub
     tag: latest
   imagePullPolicy: 'Always'
+  nodeSelector:
+    agentpool: userpool
   extraConfig:
     jupyterlab: |
       c.JupyterHub.authenticator_class = 'dummyauthenticator.DummyAuthenticator'
@@ -25,7 +27,7 @@ hub:
           async def options_form(self, spawner):
               projects = [
                 {
-                  'image': 'ddaprcacr.azurecr.io/novnc-notebook:latest',
+                  'image': 'ddapracr.azurecr.io/novnc-notebook:latest',
                   'display_name': 'Linux Virtual Desktop',
                   'description':'K8s NOVNC Desktop Spawner',
                 }
@@ -52,38 +54,40 @@ hub:
                                 {'name': 'user-claim','persistentVolumeClaim': {'claimName': 'pvc-test-jhub-user'}},
                               ],
                               'volume_mounts': [
-                                {'name': 'project-claim','mountPath': '/home/jovyan/Desktop/shared'}
+                                {'name': 'project-claim','mountPath': '/home/jovyan/Desktop/shared'},
+                                {'name': 'user-claim','mountPath': '/home/jovyan/Desktop/work'}
                               ],
                               'lifecycle_hooks': lifecycle_hooks,
                               'extra_containers': [{
                                   'name': 'jupyterlab',
-                                  'image': 'ddaprcacr.azurecr.io/datascience-notebook:latest',
+                                  'image': 'ddapracr.azurecr.io/datascience-notebook:latest',
                                   'command': ['start-notebook.sh'],
                                   'imagePullPolicy': pull_policy,
-                                  'volumeMounts': [
-                                    {'name': 'project-claim','mountPath': '/home/jovyan/shared'}
-                                  ]
+                                  
+                                  'volume_mounts': [
+                                    {'name': 'project-claim','mountPath': '/home/jovyan/shared'},
+                                    {'name': 'user-claim','mountPath': '/home/jovyan/work'}
+                                  ],
                                 },
                                 {
                                   'name': 'theia-vscode',
-                                  'image': 'ddaprcacr.azurecr.io/theia-vscode:latest',
+                                  'image': 'ddapracr.azurecr.io/theia-vscode:latest',
                                   'imagePullPolicy': pull_policy,
-                                  'volumeMounts': [
-                                    {'name': 'project-claim','mountPath': '/home/jovyan/shared'}
-                                  ]
+                                  
+                                  'volume_mounts': [
+                                    {'name': 'project-claim','mountPath': '/home/jovyan/shared'},
+                                    {'name': 'user-claim','mountPath': '/home/jovyan/work'}
+                                  ],
                                 },
                                 {
                                   'name': 'pgadmin4',
-                                  'image': 'ddaprcacr.azurecr.io/pgadmin4:latest',
+                                  'image': 'ddapracr.azurecr.io/pgadmin4:latest',
                                   'imagePullPolicy': pull_policy,
                                   'command': ['/entrypoint.sh'],
                                   'env': [{'name':'PGADMIN_DEFAULT_EMAIL', 'value':'admin@pgadmin4.dii.hhs.info'}, 
                                           {'name':'PGADMIN_DEFAULT_PASSWORD', 'value':'admin'}, 
                                           {'name':'PGADMIN_LISTEN_PORT', 'value':'5050'},
-                                          {'name':'PGADMIN_CONFIG_SERVER_MODE','value':'False'}],
-                                  # 'volumeMounts': [
-                                  #   {'name': 'user-claim','mountPath': '/var/lib/pgadmin'}
-                                  # ]
+                                          {'name':'PGADMIN_CONFIG_SERVER_MODE','value':'False'}]
                                 },
                               ]
                           }
@@ -97,15 +101,35 @@ hub:
       c.JupyterHub.spawner_class = CustomKubeSpawner
     hostaliases: |
       c.KubeSpawner.extra_pod_config={'hostAliases': [{'ip': '127.0.0.1', 'hostnames':['jupyter.dii.hhs.info','vscode.dii.hhs.info','pgadmin4.dii.hhs.info']},]}
+
 cull:
   enabled: true
   timeout: 3600
   every: 300
-    
+  
+scheduling:
+  userScheduler:
+    enabled: true
+  podPriority:
+    enabled: true
+  userPlaceholder:
+    replicas: 3
+  userPods:
+    nodeAffinity:
+      matchNodePurpose: require
+
+singleuser:
+  singleuser:
+    cpu:
+      limit: 4
+      guarantee: 0.05
+    memory:
+      limit: 4G
+      guarantee: 512M
+      
 proxy:
-  secretToken: 97bbf5d910d0c6d06be880441633953445f6965a78d25b54694f5e26374ffc6a
+  nodeSelector:
+    agentpool: userpool
+  secretToken: 98a089a34637d725efa49d780b2d324428211a81a51a30913985793507f086d8
   https:
-    hosts:
-      - ddapr-analytic-hub.eastus.cloudapp.azure.com
-    letsencrypt:
-      contactEmail: zjia@ksmconsulting.com
+    enabled: false

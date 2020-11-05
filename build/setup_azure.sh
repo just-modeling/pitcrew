@@ -49,10 +49,10 @@ az aks nodepool add --name systempool \
 --output table
 
 # Delete default nodepool and add user nodepool
-az aks nodepool delete --name nodepool1 \
---cluster-name ddapranaenv \
---resource-group MPH-DDAPR-RG \
---output table
+# az aks nodepool delete --name sparkpool \
+# --cluster-name ddapranaenv \
+# --resource-group MPH-DDAPR-RG \
+# --output table
 
 az aks nodepool add --name userpool \
 --cluster-name ddapranaenv \
@@ -79,6 +79,8 @@ az aks nodepool add --name sparkpool \
 --node-count 0 \
 --max-count 20 \
 --min-count 0 \
+--labels hub.jupyter.org/node-purpose=user \
+--node-taints hub.jupyter.org/dedicated=user:NoSchedule \
 --node-vm-size Standard_D2s_v3 \
 --vnet-subnet-id $SUBNET_ID \
 --output table
@@ -136,7 +138,7 @@ kubectl apply -f pvc-pv-jhub.yaml
 # Pull jupyterhub helm chart
 helm repo add jupyterhub https://jupyterhub.github.io/helm-chart/
 helm repo update
-helm fetch jupyterhub/jupyterhub --version 0.9.1
+helm fetch jupyterhub/jupyterhub --version 0.9.0
 
 # Build customize k8s-hub image
 cd jupyter-k8s-hub
@@ -152,7 +154,7 @@ cd ..
 ## Install jupyterhub
 helm upgrade --install ddapr-jhub jupyterhub/jupyterhub \
 	--namespace $JHUB_NAMESPACE  \
-	--version 0.9.1 \
+	--version=0.9.0 \
 	--values config.yaml \
 	--timeout=5000s
 
