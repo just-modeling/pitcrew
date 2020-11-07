@@ -100,6 +100,26 @@ az aks nodepool add --name sparkpool \
 --vnet-subnet-id $SUBNET_ID \
 --output table
 
+# Create GPU node pool
+az feature register --name GPUDedicatedVHDPreview --namespace Microsoft.ContainerService
+az feature list -o table --query "[?contains(name, 'Microsoft.ContainerService/GPUDedicatedVHDPreview')].{Name:name,State:properties.state}"
+az provider register --namespace Microsoft.ContainerService
+
+az aks nodepool add --name gpupool \
+--cluster-name ddapranaenv \
+--resource-group MPH-DDAPR-RG \
+--mode user \
+--enable-cluster-autoscaler \
+--enable-node-public-ip \
+--kubernetes-version 1.17.11 \
+--node-count 0 \
+--max-count 2 \
+--min-count 0 \
+--node-vm-size Standard_NC6 \
+--aks-custom-headers UseGPUDedicatedVHD=true \
+--vnet-subnet-id $SUBNET_ID \
+--output table
+
 # Kube Dashboard
 kubectl delete clusterrolebinding kubernetes-dashboard
 kubectl create clusterrolebinding kubernetes-dashboard \

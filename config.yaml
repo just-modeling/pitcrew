@@ -137,10 +137,16 @@ scheduling:
   podPriority:
     enabled: true
   userPlaceholder:
-    replicas: 3
+    replicas: 0
   userPods:
     nodeAffinity:
       matchNodePurpose: require
+
+prePuller:
+  hook:
+    enabled: true
+  continuous:
+    enabled: false
 
 singleuser:
   singleuser:
