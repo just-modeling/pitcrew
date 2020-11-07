@@ -1,8 +1,8 @@
 [Desktop Entry]
 Encoding=UTF-8
-Name=GitLab
-Exec=/usr/bin/firefox https://github.com
+Name=RStudio
+Exec=/usr/bin/firefox http://rstudio.ds.ksmc.container:8082
 Type=Application
 Terminal=false
-Icon=/etc/app-icons/gitlab_desktop.png
+Icon=/etc/app-icons/rstudio_desktop.png
 MimeType=text/html;text/xml;application/xhtml_xml;x-scheme-handler/http;x-scheme-handler/https;x-scheme-handler/ftp;

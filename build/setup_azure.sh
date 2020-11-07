@@ -69,7 +69,7 @@ az aks nodepool add --name userpool \
 --output table
 
 # Create Spark node pool
-az aks nodepool add --name sparkpool \
+az aks nodepool add --name jhubuserpool \
 --cluster-name ddapranaenv \
 --resource-group MPH-DDAPR-RG \
 --mode user \
@@ -81,6 +81,21 @@ az aks nodepool add --name sparkpool \
 --min-count 0 \
 --labels hub.jupyter.org/node-purpose=user \
 --node-taints hub.jupyter.org/dedicated=user:NoSchedule \
+--node-vm-size Standard_D2s_v3 \
+--vnet-subnet-id $SUBNET_ID \
+--output table
+
+# Create Spark node pool
+az aks nodepool add --name sparkpool \
+--cluster-name ddapranaenv \
+--resource-group MPH-DDAPR-RG \
+--mode user \
+--enable-cluster-autoscaler \
+--enable-node-public-ip \
+--kubernetes-version 1.17.11 \
+--node-count 0 \
+--max-count 20 \
+--min-count 0 \
 --node-vm-size Standard_D2s_v3 \
 --vnet-subnet-id $SUBNET_ID \
 --output table
@@ -127,6 +142,8 @@ ACR_ID=$(az acr show --name $ACR_NAME --resource-group $ACR_RESOURCE_GROUP --que
 az role assignment create --assignee $CLIENT_ID --role acrpull --scope $ACR_ID
 
 ## Setup Jupyterhub
+kubectl delete namespace ddapr-jhub
+kubectl delete pv --all
 # Deploy PVC
 JHUB_NAMESPACE=ddapr-jhub
 kubectl create namespace $JHUB_NAMESPACE
@@ -150,6 +167,29 @@ docker build -t ddapracr.azurecr.io/novnc-notebook:latest .
 docker push ddapracr.azurecr.io/novnc-notebook:latest
 cd ..
 
+## Create ACR pullsecret
+SPARK_NAMESPACE=ddapr-spark
+kubectl create namespace $SPARK_NAMESPACE
+ACR_ID=$(az acr show --name $ACR_NAME --resource-group $ACR_RESOURCE_GROUP --query "id" --output tsv)
+SP_PASSWD=$(az ad sp create-for-rbac --name http://$SERVICE_PRINCIPLE_ID --scopes $ACR_ID --role acrpull --query password --output tsv)
+SP_APP_ID=$(az ad sp show --id http://$SERVICE_PRINCIPLE_ID --query appId --output tsv)
+kubectl create secret docker-registry ddapracr-secret \
+    --namespace $SPARK_NAMESPACE \
+    --docker-server=$ACR_NAME.azurecr.io \
+    --docker-username=$SP_APP_ID \
+    --docker-password=$SP_PASSWD
+## Create service account for spark
+kubectl --namespace $JHUB_NAMESPACE create serviceaccount spark-admin
+kubectl create clusterrolebinding spark-role-binding \
+	--clusterrole cluster-admin \
+	--serviceaccount=$JHUB_NAMESPACE:spark-admin \
+	--serviceaccount=$SPARK_NAMESPACE:spark-admin
+
+kubectl --namespace $SPARK_NAMESPACE create serviceaccount spark-admin
+kubectl create clusterrolebinding spark-role-binding \
+	--clusterrole cluster-admin \
+	--serviceaccount=$SPARK_NAMESPACE:spark-admin
+
 # Build customized jupyterhub chart
 ## Install jupyterhub
 helm upgrade --install ddapr-jhub jupyterhub/jupyterhub \
@@ -160,23 +200,23 @@ helm upgrade --install ddapr-jhub jupyterhub/jupyterhub \
 
 ## Install Gitlab
 ## Need DNS service configured first https://docs.gitlab.com/charts/installation/deployment.html
-GITLAB_NAMESPACE=hhs-gitlab
-kubectl create ns $GITLAB_NAMESPACE
-kubectl create secret generic gitlab-db-secret --from-literal=username=mphhubadmin@mphhubdbs1 --from-literal=password='Simple123!' -n $GITLAB_NAMESPACE
-helm repo add gitlab https://charts.gitlab.io/
-helm repo update
-helm upgrade --install hhs-gitlab gitlab/gitlab \
-	--namespace $GITLAB_NAMESPACE  \
-	--set global.edition=ce \
-	--set global.imagePullPolicy=Always \
-	--set certmanager-issuer.email=zjia@ksmconsulting.com \
-	--set postgresql.install=false \
-	--set global.psql.host=mphhubdbs1.postgres.database.azure.com \
-	--set global.psql.password.secret=gitlab-db-secret \
-	--set global.psql.password.key=password \
-	--set global.psql.database=hhs_gitlab \
-	--set global.psql.username=mphhubadmin@mphhubdbs1 \
-	--timeout=5000s
+# GITLAB_NAMESPACE=hhs-gitlab
+# kubectl create ns $GITLAB_NAMESPACE
+# kubectl create secret generic gitlab-db-secret --from-literal=username=mphhubadmin@mphhubdbs1 --from-literal=password='Simple123!' -n $GITLAB_NAMESPACE
+# helm repo add gitlab https://charts.gitlab.io/
+# helm repo update
+# helm upgrade --install hhs-gitlab gitlab/gitlab \
+# 	--namespace $GITLAB_NAMESPACE  \
+# 	--set global.edition=ce \
+# 	--set global.imagePullPolicy=Always \
+# 	--set certmanager-issuer.email=zjia@ksmconsulting.com \
+# 	--set postgresql.install=false \
+# 	--set global.psql.host=mphhubdbs1.postgres.database.azure.com \
+# 	--set global.psql.password.secret=gitlab-db-secret \
+# 	--set global.psql.password.key=password \
+# 	--set global.psql.database=hhs_gitlab \
+# 	--set global.psql.username=mphhubadmin@mphhubdbs1 \
+# 	--timeout=5000s
 
 ## Setup auto-reboot
 #kubectl apply -f https://github.com/weaveworks/kured/releases/download/1.2.0/kured-1.2.0-dockerhub.yaml

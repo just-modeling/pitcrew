@@ -57,23 +57,49 @@ hub:
                                 {'name': 'project-claim','mountPath': '/home/jovyan/Desktop/shared'},
                                 {'name': 'user-claim','mountPath': '/home/jovyan/Desktop/work'}
                               ],
+                              'singleuser_extra_pod_config': {
+                                'service_account_name': 'spark-admin',
+                                'automount_service_account_token': True,
+                                'hostAliases': [{'ip': '127.0.0.1', 'hostnames':['jupyter.ds.ksmc.container','rstudio.ds.ksmc.container','vscode.appdev.ksmc.container','pgadmin4.de.ksmc.container','spark.ds.ksmc.container']}]
+                              },
                               'lifecycle_hooks': lifecycle_hooks,
-                              'extra_containers': [{
+                              'extra_containers': [
+                                {
                                   'name': 'jupyterlab',
                                   'image': 'ddapracr.azurecr.io/datascience-notebook:latest',
                                   'command': ['start-notebook.sh'],
-                                  'imagePullPolicy': pull_policy,
-                                  
+                                  'image_pull_policy': pull_policy,
                                   'volume_mounts': [
                                     {'name': 'project-claim','mountPath': '/home/jovyan/shared'},
                                     {'name': 'user-claim','mountPath': '/home/jovyan/work'}
                                   ],
                                 },
                                 {
+                                  'name': 'rstudio',
+                                  'image': 'ddapracr.azurecr.io/rstudio:latest',
+                                  'image_pull_policy': pull_policy,
+                                  'volume_mounts': [
+                                    {'name': 'project-claim','mountPath': '/home/jovyan/shared'},
+                                    {'name': 'user-claim','mountPath': '/home/jovyan/work'}
+                                  ],
+                                },
+                                {
+                                  'name': 'spark',
+                                  'image': 'ddapracr.azurecr.io/pyspark-notebook:v2.4.5',
+                                  'command': ['start-notebook.sh'],
+                                  'image_pull_policy': pull_policy,
+                                  'volume_mounts': [
+                                    {'name': 'project-claim','mountPath': '/home/jovyan/shared'},
+                                    {'name': 'user-claim','mountPath': '/home/jovyan/work'}
+                                  ],
+                                  'env': [
+                                    {'name': 'MY_POD_IP', 'valueFrom': { 'fieldRef' : { 'fieldPath' : 'status.podIP' } } }
+                                  ]
+                                },
+                                {
                                   'name': 'theia-vscode',
                                   'image': 'ddapracr.azurecr.io/theia-vscode:latest',
-                                  'imagePullPolicy': pull_policy,
-                                  
+                                  'image_pull_policy': pull_policy,
                                   'volume_mounts': [
                                     {'name': 'project-claim','mountPath': '/home/jovyan/shared'},
                                     {'name': 'user-claim','mountPath': '/home/jovyan/work'}
@@ -82,7 +108,7 @@ hub:
                                 {
                                   'name': 'pgadmin4',
                                   'image': 'ddapracr.azurecr.io/pgadmin4:latest',
-                                  'imagePullPolicy': pull_policy,
+                                  'image_pull_policy': pull_policy,
                                   'command': ['/entrypoint.sh'],
                                   'env': [{'name':'PGADMIN_DEFAULT_EMAIL', 'value':'admin@pgadmin4.dii.hhs.info'}, 
                                           {'name':'PGADMIN_DEFAULT_PASSWORD', 'value':'admin'}, 
@@ -99,13 +125,11 @@ hub:
               profile_form_template = Environment(loader=BaseLoader).from_string(self.profile_form_template)
               return profile_form_template.render(profile_list=p_list)
       c.JupyterHub.spawner_class = CustomKubeSpawner
-    hostaliases: |
-      c.KubeSpawner.extra_pod_config={'hostAliases': [{'ip': '127.0.0.1', 'hostnames':['jupyter.dii.hhs.info','vscode.dii.hhs.info','pgadmin4.dii.hhs.info']},]}
 
 cull:
   enabled: true
   timeout: 3600
-  every: 300
+  every: 600
   
 scheduling:
   userScheduler:

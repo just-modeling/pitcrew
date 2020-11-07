@@ -1,7 +1,7 @@
 [Desktop Entry]
 Encoding=UTF-8
 Name=VSCode
-Exec=/usr/bin/firefox http://vscode.dii.hhs.info:8081
+Exec=/usr/bin/firefox http://vscode.appdev.ksmc.container:8081
 Type=Application
 Terminal=false
 Icon=/etc/app-icons/vscode_desktop.png

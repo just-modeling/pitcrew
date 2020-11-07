@@ -1,8 +1,8 @@
 [Desktop Entry]
 Encoding=UTF-8
-Name=Unifi Data Catalog
-Exec=/usr/bin/firefox http://unifi.dii.hhs.info:8082/datasets
+Name=Apache Spark
+Exec=/usr/bin/firefox http://spark.ds.ksmc.container:8083
 Type=Application
 Terminal=false
-Icon=/etc/app-icons/unifi_desktop.png
+Icon=/etc/app-icons/apache-spark.png
 MimeType=text/html;text/xml;application/xhtml_xml;x-scheme-handler/http;x-scheme-handler/https;x-scheme-handler/ftp;
