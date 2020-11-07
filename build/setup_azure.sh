@@ -178,13 +178,13 @@ kubectl create secret docker-registry ddapracr-secret \
     --docker-server=$ACR_NAME.azurecr.io \
     --docker-username=$SP_APP_ID \
     --docker-password=$SP_PASSWD
+
 ## Create service account for spark
 kubectl --namespace $JHUB_NAMESPACE create serviceaccount spark-admin
 kubectl create clusterrolebinding spark-role-binding \
 	--clusterrole cluster-admin \
 	--serviceaccount=$JHUB_NAMESPACE:spark-admin \
 	--serviceaccount=$SPARK_NAMESPACE:spark-admin
-
 kubectl --namespace $SPARK_NAMESPACE create serviceaccount spark-admin
 kubectl create clusterrolebinding spark-role-binding \
 	--clusterrole cluster-admin \
