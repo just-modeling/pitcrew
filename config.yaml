@@ -25,30 +25,22 @@ hub:
       from jinja2 import Environment, BaseLoader
       class CustomKubeSpawner(KubeSpawner):
           async def options_form(self, spawner):
-              projects = [
-                {
-                  'image': 'ddapracr.azurecr.io/novnc-notebook:latest',
-                  'display_name': 'Linux Virtual Desktop',
-                  'description':'K8s NOVNC Desktop Spawner',
-                }
-              ]
               p_list = []
-              default = True
-              for p in projects:
-                  pull_policy = 'Always'
-                  lifecycle_hooks = {}
+              pull_policy = 'Always'
+              if True:
                   # construct the project space list
                   p_list.append(
-                      {'display_name':p['display_name'],'description': p['description'], 'default': default,
+                      {'display_name':'Evolution X','description': 'K8s NOVNC Desktop. Include JupyterLab, RStudio, VSCode, pgAdmin4, Apache Spark. 2 CPUs, 6GB RAM', 'default': True,
                        'kubespawner_override': 
                          {
-                              'image': p['image'],
+                              'image': 'ddapracr.azurecr.io/novnc-notebook:latest',
                               'cmd': ['startup'],
                               'image_pull_policy': pull_policy,
                               'cpu_limit': 2,
                               'cpu_guarantee': 0.5,
-                              'mem_limit': '4G',
+                              'mem_limit': '6G',
                               'mem_guarantee': '2G',
+                              'node_selector': {'agentpool': 'jhubuserpool'},
                               'volumes': [
                                 {'name': 'project-claim','persistentVolumeClaim': {'claimName': 'pvc-test-jhub-project'}},
                                 {'name': 'user-claim','persistentVolumeClaim': {'claimName': 'pvc-test-jhub-user'}},
@@ -62,11 +54,93 @@ hub:
                                 'automount_service_account_token': True,
                                 'hostAliases': [{'ip': '127.0.0.1', 'hostnames':['jupyter.ds.ksmc.container','rstudio.ds.ksmc.container','vscode.appdev.ksmc.container','pgadmin4.de.ksmc.container','spark.ds.ksmc.container']}]
                               },
-                              'lifecycle_hooks': lifecycle_hooks,
                               'extra_containers': [
                                 {
                                   'name': 'jupyterlab',
                                   'image': 'ddapracr.azurecr.io/datascience-notebook:latest',
+                                  'command': ['start-notebook.sh'],
+                                  'image_pull_policy': pull_policy,
+                                  'volume_mounts': [
+                                    {'name': 'project-claim','mountPath': '/home/jovyan/shared'},
+                                    {'name': 'user-claim','mountPath': '/home/jovyan/work'}
+                                  ],
+                                },
+                                {
+                                  'name': 'rstudio',
+                                  'image': 'ddapracr.azurecr.io/rstudio:latest',
+                                  'image_pull_policy': pull_policy,
+                                  'volume_mounts': [
+                                    {'name': 'project-claim','mountPath': '/home/jovyan/shared'},
+                                    {'name': 'user-claim','mountPath': '/home/jovyan/work'}
+                                  ],
+                                },
+                                {
+                                  'name': 'spark',
+                                  'image': 'ddapracr.azurecr.io/pyspark-notebook:v2.4.5',
+                                  'command': ['start-notebook.sh'],
+                                  'image_pull_policy': pull_policy,
+                                  'volume_mounts': [
+                                    {'name': 'project-claim','mountPath': '/home/jovyan/shared'},
+                                    {'name': 'user-claim','mountPath': '/home/jovyan/work'}
+                                  ],
+                                  'env': [
+                                    {'name': 'MY_POD_IP', 'valueFrom': { 'fieldRef' : { 'fieldPath' : 'status.podIP' } } }
+                                  ],
+                                },
+                                {
+                                  'name': 'theia-vscode',
+                                  'image': 'ddapracr.azurecr.io/theia-vscode:latest',
+                                  'image_pull_policy': pull_policy,
+                                  'volume_mounts': [
+                                    {'name': 'project-claim','mountPath': '/home/jovyan/shared'},
+                                    {'name': 'user-claim','mountPath': '/home/jovyan/work'}
+                                  ],
+                                },
+                                {
+                                  'name': 'pgadmin4',
+                                  'image': 'ddapracr.azurecr.io/pgadmin4:latest',
+                                  'image_pull_policy': pull_policy,
+                                  'command': ['/entrypoint.sh'],
+                                  'env': [{'name':'PGADMIN_DEFAULT_EMAIL', 'value':'admin@pgadmin4.dii.hhs.info'}, 
+                                          {'name':'PGADMIN_DEFAULT_PASSWORD', 'value':'admin'}, 
+                                          {'name':'PGADMIN_LISTEN_PORT', 'value':'5050'},
+                                          {'name':'PGADMIN_CONFIG_SERVER_MODE','value':'False'}]
+                                },
+                              ]
+                          }
+                      }
+                  )
+                  p_list.append(
+                      {'display_name':'Evolution G','description': 'K8s NOVNC Desktop. Include JupyterLab, RStudio. 4 CPUs, 32GB RAM, NVIDIA Tesla K80 12GB', 'default': False,
+                       'kubespawner_override': 
+                         {
+                              'image': 'ddapracr.azurecr.io/novnc-notebook:latest',
+                              'cmd': ['startup'],
+                              'image_pull_policy': pull_policy,
+                              'cpu_limit': 4,
+                              'cpu_guarantee': 2,
+                              'mem_limit': '32G',
+                              'mem_guarantee': '8G',
+                              'node_selector': {'agentpool': 'jhubgpupool'},
+                              'extra_resource_guarantees' : {"nvidia.com/gpu": 1},
+                              'extra_resource_limits' : {"nvidia.com/gpu": 1},
+                              'volumes': [
+                                {'name': 'project-claim','persistentVolumeClaim': {'claimName': 'pvc-test-jhub-project'}},
+                                {'name': 'user-claim','persistentVolumeClaim': {'claimName': 'pvc-test-jhub-user'}},
+                              ],
+                              'volume_mounts': [
+                                {'name': 'project-claim','mountPath': '/home/jovyan/Desktop/shared'},
+                                {'name': 'user-claim','mountPath': '/home/jovyan/Desktop/work'}
+                              ],
+                              'singleuser_extra_pod_config': {
+                                'service_account_name': 'spark-admin',
+                                'automount_service_account_token': True,
+                                'hostAliases': [{'ip': '127.0.0.1', 'hostnames':['jupyter.ds.ksmc.container','rstudio.ds.ksmc.container','vscode.appdev.ksmc.container','pgadmin4.de.ksmc.container','spark.ds.ksmc.container']}]
+                              },
+                              'extra_containers': [
+                                {
+                                  'name': 'jupyterlab',
+                                  'image': 'ddapracr.azurecr.io/tensorflow-notebook:latest',
                                   'command': ['start-notebook.sh'],
                                   'image_pull_policy': pull_policy,
                                   'volume_mounts': [
@@ -119,7 +193,6 @@ hub:
                           }
                       }
                   )
-                  default = False
               self.profile_list = p_list
               self._profile_list = p_list
               profile_form_template = Environment(loader=BaseLoader).from_string(self.profile_form_template)
@@ -136,8 +209,11 @@ scheduling:
     enabled: true
   podPriority:
     enabled: true
+    globalDefault: false
+    defaultPriority: 0
+    userPlaceholderPriority: -10
   userPlaceholder:
-    replicas: 0
+    replicas: 1
   userPods:
     nodeAffinity:
       matchNodePurpose: require
@@ -145,17 +221,11 @@ scheduling:
 prePuller:
   hook:
     enabled: true
+  nodeSelector:
+    agentpool: jhubuserpool
   continuous:
-    enabled: false
+    enabled: true
 
-singleuser:
-  singleuser:
-    cpu:
-      limit: 4
-      guarantee: 0.05
-    memory:
-      limit: 4G
-      guarantee: 512M
       
 proxy:
   nodeSelector:

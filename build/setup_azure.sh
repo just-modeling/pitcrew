@@ -91,12 +91,11 @@ az aks nodepool add --name sparkpool \
 --resource-group MPH-DDAPR-RG \
 --mode user \
 --enable-cluster-autoscaler \
---enable-node-public-ip \
 --kubernetes-version 1.17.11 \
 --node-count 0 \
 --max-count 20 \
 --min-count 0 \
---node-vm-size Standard_D2s_v3 \
+--node-vm-size Standard_D8s_v3 \
 --vnet-subnet-id $SUBNET_ID \
 --output table
 
@@ -105,7 +104,7 @@ az feature register --name GPUDedicatedVHDPreview --namespace Microsoft.Containe
 az feature list -o table --query "[?contains(name, 'Microsoft.ContainerService/GPUDedicatedVHDPreview')].{Name:name,State:properties.state}"
 az provider register --namespace Microsoft.ContainerService
 
-az aks nodepool add --name gpupool \
+az aks nodepool add --name jhubgpupool \
 --cluster-name ddapranaenv \
 --resource-group MPH-DDAPR-RG \
 --mode user \
@@ -115,6 +114,8 @@ az aks nodepool add --name gpupool \
 --node-count 0 \
 --max-count 2 \
 --min-count 0 \
+--labels hub.jupyter.org/node-purpose=user \
+--node-taints hub.jupyter.org/dedicated=user:NoSchedule \
 --node-vm-size Standard_NC6 \
 --aks-custom-headers UseGPUDedicatedVHD=true \
 --vnet-subnet-id $SUBNET_ID \
@@ -188,13 +189,11 @@ docker push ddapracr.azurecr.io/novnc-notebook:latest
 cd ..
 
 ## Create ACR pullsecret
-SPARK_NAMESPACE=ddapr-spark
-kubectl create namespace $SPARK_NAMESPACE
 ACR_ID=$(az acr show --name $ACR_NAME --resource-group $ACR_RESOURCE_GROUP --query "id" --output tsv)
 SP_PASSWD=$(az ad sp create-for-rbac --name http://$SERVICE_PRINCIPLE_ID --scopes $ACR_ID --role acrpull --query password --output tsv)
 SP_APP_ID=$(az ad sp show --id http://$SERVICE_PRINCIPLE_ID --query appId --output tsv)
 kubectl create secret docker-registry ddapracr-secret \
-    --namespace $SPARK_NAMESPACE \
+    --namespace $JHUB_NAMESPACE \
     --docker-server=$ACR_NAME.azurecr.io \
     --docker-username=$SP_APP_ID \
     --docker-password=$SP_PASSWD
@@ -203,12 +202,7 @@ kubectl create secret docker-registry ddapracr-secret \
 kubectl --namespace $JHUB_NAMESPACE create serviceaccount spark-admin
 kubectl create clusterrolebinding spark-role-binding \
 	--clusterrole cluster-admin \
-	--serviceaccount=$JHUB_NAMESPACE:spark-admin \
-	--serviceaccount=$SPARK_NAMESPACE:spark-admin
-kubectl --namespace $SPARK_NAMESPACE create serviceaccount spark-admin
-kubectl create clusterrolebinding spark-role-binding \
-	--clusterrole cluster-admin \
-	--serviceaccount=$SPARK_NAMESPACE:spark-admin
+	--serviceaccount=$JHUB_NAMESPACE:spark-admin
 
 # Build customized jupyterhub chart
 ## Install jupyterhub
@@ -217,6 +211,8 @@ helm upgrade --install ddapr-jhub jupyterhub/jupyterhub \
 	--version=0.9.0 \
 	--values config.yaml \
 	--timeout=5000s
+
+kubectl -n ddapr-jhub get pods | grep Pending | cut -d' ' -f 1 | xargs kubectl -n ddapr-jhub delete pod
 
 ## Install Gitlab
 ## Need DNS service configured first https://docs.gitlab.com/charts/installation/deployment.html
