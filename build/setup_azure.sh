@@ -48,13 +48,7 @@ az aks nodepool add --name systempool \
 --vnet-subnet-id $SUBNET_ID \
 --output table
 
-# Delete default nodepool and add user nodepool
-# az aks nodepool delete --name sparkpool \
-# --cluster-name ddapranaenv \
-# --resource-group MPH-DDAPR-RG \
-# --output table
-
-az aks nodepool add --name userpool \
+az aks nodepool add --name apppool \
 --cluster-name ddapranaenv \
 --resource-group MPH-DDAPR-RG \
 --mode user \
@@ -64,8 +58,15 @@ az aks nodepool add --name userpool \
 --node-count 0 \
 --max-count 4 \
 --min-count 0 \
+--labels dedicate.pool=apppool \
 --node-vm-size Standard_D2s_v3 \
 --vnet-subnet-id $SUBNET_ID \
+--output table
+
+# Delete default nodepool and add user nodepool
+az aks nodepool delete --name jhubgpupool \
+--cluster-name ddapranaenv \
+--resource-group MPH-DDAPR-RG \
 --output table
 
 # Create Spark node pool
@@ -79,7 +80,7 @@ az aks nodepool add --name jhubuserpool \
 --node-count 0 \
 --max-count 20 \
 --min-count 0 \
---labels hub.jupyter.org/node-purpose=user \
+--labels hub.jupyter.org/node-purpose=user dedicate.pool=jhubuserpool \
 --node-taints hub.jupyter.org/dedicated=user:NoSchedule \
 --node-vm-size Standard_D2s_v3 \
 --vnet-subnet-id $SUBNET_ID \
@@ -95,6 +96,7 @@ az aks nodepool add --name sparkpool \
 --node-count 0 \
 --max-count 20 \
 --min-count 0 \
+--labels dedicate.pool=sparkpool \
 --node-vm-size Standard_D8s_v3 \
 --vnet-subnet-id $SUBNET_ID \
 --output table
@@ -114,7 +116,7 @@ az aks nodepool add --name jhubgpupool \
 --node-count 0 \
 --max-count 2 \
 --min-count 0 \
---labels hub.jupyter.org/node-purpose=user \
+--labels hub.jupyter.org/node-purpose=user dedicate.pool=gpupool \
 --node-taints hub.jupyter.org/dedicated=user:NoSchedule \
 --node-vm-size Standard_NC6 \
 --aks-custom-headers UseGPUDedicatedVHD=true \
@@ -189,6 +191,11 @@ docker push ddapracr.azurecr.io/novnc-notebook:latest
 cd ..
 
 ## Create ACR pullsecret
+ACR_NAME=ddapracr
+AKS_RESOURCE_GROUP=MPH-DDAPR-RG
+AKS_CLUSTER_NAME=ddapranaenv
+ACR_RESOURCE_GROUP=MPH-DDAPR-RG
+SERVICE_PRINCIPLE_ID=51e9d870-c881-4d7a-8c33-48ca617eac52
 ACR_ID=$(az acr show --name $ACR_NAME --resource-group $ACR_RESOURCE_GROUP --query "id" --output tsv)
 SP_PASSWD=$(az ad sp create-for-rbac --name http://$SERVICE_PRINCIPLE_ID --scopes $ACR_ID --role acrpull --query password --output tsv)
 SP_APP_ID=$(az ad sp show --id http://$SERVICE_PRINCIPLE_ID --query appId --output tsv)
@@ -199,6 +206,7 @@ kubectl create secret docker-registry ddapracr-secret \
     --docker-password=$SP_PASSWD
 
 ## Create service account for spark
+kubectl delete clusterrolebinding spark-role-binding
 kubectl --namespace $JHUB_NAMESPACE create serviceaccount spark-admin
 kubectl create clusterrolebinding spark-role-binding \
 	--clusterrole cluster-admin \

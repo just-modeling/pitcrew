@@ -11,7 +11,7 @@ hub:
     tag: latest
   imagePullPolicy: 'Always'
   nodeSelector:
-    agentpool: userpool
+    dedicate.pool: apppool
   extraConfig:
     jupyterlab: |
       c.JupyterHub.authenticator_class = 'dummyauthenticator.DummyAuthenticator'
@@ -40,7 +40,7 @@ hub:
                               'cpu_guarantee': 0.5,
                               'mem_limit': '6G',
                               'mem_guarantee': '2G',
-                              'node_selector': {'agentpool': 'jhubuserpool'},
+                              'node_selector': {'dedicate.pool': 'jhubuserpool'},
                               'volumes': [
                                 {'name': 'project-claim','persistentVolumeClaim': {'claimName': 'pvc-test-jhub-project'}},
                                 {'name': 'user-claim','persistentVolumeClaim': {'claimName': 'pvc-test-jhub-user'}},
@@ -111,7 +111,7 @@ hub:
                       }
                   )
                   p_list.append(
-                      {'display_name':'Evolution G','description': 'K8s NOVNC Desktop. Include JupyterLab, RStudio. 4 CPUs, 32GB RAM, NVIDIA Tesla K80 12GB', 'default': False,
+                      {'display_name':'Evolution GT','description': 'K8s NOVNC Desktop. Include JupyterLab, RStudio. 4 CPUs, 32GB RAM, NVIDIA Tesla K80 12GB', 'default': False,
                        'kubespawner_override': 
                          {
                               'image': 'ddapracr.azurecr.io/novnc-notebook:latest',
@@ -121,7 +121,7 @@ hub:
                               'cpu_guarantee': 2,
                               'mem_limit': '32G',
                               'mem_guarantee': '8G',
-                              'node_selector': {'agentpool': 'jhubgpupool'},
+                              'node_selector': {'dedicate.pool': 'gpupool'},
                               'extra_resource_guarantees' : {"nvidia.com/gpu": 1},
                               'extra_resource_limits' : {"nvidia.com/gpu": 1},
                               'volumes': [
@@ -209,9 +209,9 @@ scheduling:
     enabled: true
   podPriority:
     enabled: true
-    globalDefault: false
-    defaultPriority: 0
-    userPlaceholderPriority: -10
+    # globalDefault: false
+    # defaultPriority: 0
+    # userPlaceholderPriority: -10
   userPlaceholder:
     replicas: 1
   userPods:
@@ -222,14 +222,14 @@ prePuller:
   hook:
     enabled: true
   nodeSelector:
-    agentpool: jhubuserpool
+    hub.jupyter.org/node-purpose: user
   continuous:
     enabled: true
 
       
 proxy:
   nodeSelector:
-    agentpool: userpool
+    dedicate.pool: apppool
   secretToken: 98a089a34637d725efa49d780b2d324428211a81a51a30913985793507f086d8
   https:
     enabled: false
