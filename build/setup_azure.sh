@@ -28,7 +28,7 @@ az aks create --name ddapranaenv \
 --node-count 1 \
 --node-vm-size Standard_D2s_v3 \
 --enable-vmss \
---kubernetes-version 1.17.11 \
+--kubernetes-version 1.17.16 \
 --load-balancer-sku standard \
 --vm-set-type VirtualMachineScaleSets \
 --vnet-subnet-id $SUBNET_ID \
@@ -40,7 +40,7 @@ az aks nodepool add --name systempool \
 --cluster-name ddapranaenv \
 --resource-group MPH-DDAPR-RG \
 --enable-node-public-ip \
---kubernetes-version 1.17.11 \
+--kubernetes-version 1.17.16 \
 --node-taints CriticalAddonsOnly=true:NoSchedule \
 --mode System \
 --node-count 1 \
@@ -48,14 +48,21 @@ az aks nodepool add --name systempool \
 --vnet-subnet-id $SUBNET_ID \
 --output table
 
+# Delete default nodepool pool0
+az aks nodepool delete --name nodepool1 \
+--cluster-name ddapranaenv \
+--resource-group MPH-DDAPR-RG \
+--output table
+
+# Create node pool for deploying applications
 az aks nodepool add --name apppool \
 --cluster-name ddapranaenv \
 --resource-group MPH-DDAPR-RG \
 --mode user \
 --enable-cluster-autoscaler \
 --enable-node-public-ip \
---kubernetes-version 1.17.11 \
---node-count 0 \
+--kubernetes-version 1.17.16 \
+--node-count 1 \
 --max-count 4 \
 --min-count 0 \
 --labels dedicate.pool=apppool \
@@ -63,20 +70,14 @@ az aks nodepool add --name apppool \
 --vnet-subnet-id $SUBNET_ID \
 --output table
 
-# Delete default nodepool and add user nodepool
-az aks nodepool delete --name jhubgpupool \
---cluster-name ddapranaenv \
---resource-group MPH-DDAPR-RG \
---output table
-
-# Create Spark node pool
+# Create Jupyterhub user node pool
 az aks nodepool add --name jhubuserpool \
 --cluster-name ddapranaenv \
 --resource-group MPH-DDAPR-RG \
 --mode user \
 --enable-cluster-autoscaler \
 --enable-node-public-ip \
---kubernetes-version 1.17.11 \
+--kubernetes-version 1.17.16 \
 --node-count 0 \
 --max-count 20 \
 --min-count 0 \
@@ -92,7 +93,7 @@ az aks nodepool add --name sparkpool \
 --resource-group MPH-DDAPR-RG \
 --mode user \
 --enable-cluster-autoscaler \
---kubernetes-version 1.17.11 \
+--kubernetes-version 1.17.16 \
 --node-count 0 \
 --max-count 20 \
 --min-count 0 \
@@ -112,7 +113,7 @@ az aks nodepool add --name jhubgpupool \
 --mode user \
 --enable-cluster-autoscaler \
 --enable-node-public-ip \
---kubernetes-version 1.17.11 \
+--kubernetes-version 1.17.16 \
 --node-count 0 \
 --max-count 2 \
 --min-count 0 \
@@ -123,6 +124,23 @@ az aks nodepool add --name jhubgpupool \
 --vnet-subnet-id $SUBNET_ID \
 --output table
 
+# Kube Upgrade
+az aks nodepool update --resource-group MPH-DDAPR-RG \
+	--cluster-name ddapranaenv \
+	--name jhubuserpool --disable-cluster-autoscaler 
+az aks nodepool update --resource-group MPH-DDAPR-RG \
+ 	--cluster-name ddapranaenv \
+	--name jhubuserpool \
+	--enable-cluster-autoscaler \
+	--max-count 20 \
+	--min-count 0
+
+## Install kubectl
+az aks get-credentials --name ddapranaenv \
+	--resource-group MPH-DDAPR-RG \
+	--output table
+kubectl get node
+
 # Kube Dashboard
 kubectl delete clusterrolebinding kubernetes-dashboard
 kubectl create clusterrolebinding kubernetes-dashboard \
@@ -131,11 +149,6 @@ kubectl create clusterrolebinding kubernetes-dashboard \
 --user=clusterUser
 az aks browse --resource-group MPH-DDAPR-RG --name ddapranaenv
 
-## Install kubectl
-az aks get-credentials --name ddapranaenv \
-	--resource-group MPH-DDAPR-RG \
-	--output table
-kubectl get node
 
 ## Set up Helm 3
 # Mac OS
@@ -216,7 +229,7 @@ kubectl create clusterrolebinding spark-role-binding \
 ## Install jupyterhub
 helm upgrade --install ddapr-jhub jupyterhub/jupyterhub \
 	--namespace $JHUB_NAMESPACE  \
-	--version=0.9.0 \
+	--version=0.9.1 \
 	--values config.yaml \
 	--timeout=5000s
 

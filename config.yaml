@@ -213,7 +213,7 @@ scheduling:
     # defaultPriority: 0
     # userPlaceholderPriority: -10
   userPlaceholder:
-    replicas: 1
+    replicas: 0
   userPods:
     nodeAffinity:
       matchNodePurpose: require
