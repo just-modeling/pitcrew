@@ -1,0 +1,37 @@
+###### Persistent Volume
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-nga-demo-pipeline
+  labels:
+    usage: pv-nga-demo-pipeline
+spec:
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  azureFile:
+    secretName: azure-fileshare-secret
+    shareName: sc-kubeflow-storage
+    readOnly: false
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pvc-nga-demo-pipeline
+  namespace: pitcrew-kubeflow
+  # Set this annotation to NOT let Kubernetes automatically create
+  # a persistent volume for this volume claim.
+  annotations:
+    volume.beta.kubernetes.io/storage-class: ""
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 10Gi
+  selector:
+    # To make sure we match the claim with the exact volume, match the label
+    matchLabels:
+      usage: pv-nga-demo-pipeline

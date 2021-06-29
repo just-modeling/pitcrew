@@ -1,30 +1,30 @@
 az login
 az account list --refresh --output table
-az account set -s 'Pay-As-You-Go - MPH Analytics (Development)'
+az account set -s 'Azure subscription 1'
 
 ## Service Principle ID
-TENANT_ID=50225b46-8a5b-4a27-b140-349ac9c7b83c
-SERVICE_PRINCIPLE_ID=51e9d870-c881-4d7a-8c33-48ca617eac52
-SERVICE_PRINCIPLE_SECRET=tD~-3eYMFNkv.UPFc2583y7XZd2ji~t23-
+TENANT_ID=56b3f762-b01e-4e87-be31-e4feb4fade9d
+SERVICE_PRINCIPLE_ID=8aeeb2cf-0fc0-4254-9bce-7b6aba7f7e02
+SERVICE_PRINCIPLE_SECRET=.~8KjCWVAy0RtYMH-4g~-H746MU3ZlYdMm
 
 ## Create Vnet and subnet for AKS
 az network vnet create \
-    --resource-group MPH-DDAPR-RG \
-    --name DDAPR-AKS-VNET \
+    --resource-group PITCREW-ERE-RG \
+    --name PITCREW-AKS-VNET \
     --address-prefixes 10.1.0.0/16 \
     --subnet-name kubesubnet \
     --subnet-prefix 10.1.0.0/24
-VNET_ID=$(az network vnet show --resource-group MPH-DDAPR-RG --name DDAPR-AKS-VNET --query id -o tsv)
-SUBNET_ID=$(az network vnet subnet show --resource-group MPH-DDAPR-RG --vnet-name DDAPR-AKS-VNET --name kubesubnet --query id -o tsv)
+VNET_ID=$(az network vnet show --resource-group PITCREW-ERE-RG --name PITCREW-AKS-VNET --query id -o tsv)
+SUBNET_ID=$(az network vnet subnet show --resource-group PITCREW-ERE-RG --vnet-name PITCREW-AKS-VNET --name kubesubnet --query id -o tsv)
 az role assignment create --assignee $SERVICE_PRINCIPLE_ID --scope $VNET_ID --role Contributor
 
 ## Create Kubernetes Cluster
-ssh-keygen -f ssh-key-ddapranaenv
-az aks create --name ddapranaenv \
---resource-group MPH-DDAPR-RG \
+ssh-keygen -f ssh-key-pitcrew
+az aks create --name pitcrewaks \
+--resource-group PITCREW-ERE-RG \
 --service-principal $SERVICE_PRINCIPLE_ID \
 --client-secret  $SERVICE_PRINCIPLE_SECRET \
---ssh-key-value ssh-key-ddapranaenv.pub \
+--ssh-key-value ssh-key-pitcrew.pub \
 --node-count 1 \
 --node-vm-size Standard_D2s_v3 \
 --enable-vmss \
@@ -37,8 +37,8 @@ az aks create --name ddapranaenv \
 
 # Create system nodepool
 az aks nodepool add --name systempool \
---cluster-name ddapranaenv \
---resource-group MPH-DDAPR-RG \
+--cluster-name pitcrewaks \
+--resource-group PITCREW-ERE-RG \
 --enable-node-public-ip \
 --kubernetes-version 1.17.16 \
 --node-taints CriticalAddonsOnly=true:NoSchedule \
@@ -49,15 +49,15 @@ az aks nodepool add --name systempool \
 --output table
 
 # Delete default nodepool pool0
-az aks nodepool delete --name nodepool1 \
---cluster-name ddapranaenv \
---resource-group MPH-DDAPR-RG \
+az aks nodepool delete --name jhubcompute \
+--cluster-name pitcrewaks \
+--resource-group PITCREW-ERE-RG \
 --output table
 
 # Create node pool for deploying applications
 az aks nodepool add --name apppool \
---cluster-name ddapranaenv \
---resource-group MPH-DDAPR-RG \
+--cluster-name pitcrewaks \
+--resource-group PITCREW-ERE-RG \
 --mode user \
 --enable-cluster-autoscaler \
 --enable-node-public-ip \
@@ -72,8 +72,8 @@ az aks nodepool add --name apppool \
 
 # Create Jupyterhub user node pool
 az aks nodepool add --name jhubuserpool \
---cluster-name ddapranaenv \
---resource-group MPH-DDAPR-RG \
+--cluster-name pitcrewaks \
+--resource-group PITCREW-ERE-RG \
 --mode user \
 --enable-cluster-autoscaler \
 --enable-node-public-ip \
@@ -87,10 +87,26 @@ az aks nodepool add --name jhubuserpool \
 --vnet-subnet-id $SUBNET_ID \
 --output table
 
+# Create Jupyterhub user large node pool
+az aks nodepool add --name kfpipeline \
+--cluster-name pitcrewaks \
+--resource-group PITCREW-ERE-RG \
+--mode user \
+--enable-cluster-autoscaler \
+--enable-node-public-ip \
+--kubernetes-version 1.17.16 \
+--node-count 0 \
+--max-count 10 \
+--min-count 0 \
+--labels dedicate.pool=pipelinepool \
+--node-vm-size Standard_D4s_v3 \
+--vnet-subnet-id $SUBNET_ID \
+--output table
+
 # Create Spark node pool
 az aks nodepool add --name sparkpool \
---cluster-name ddapranaenv \
---resource-group MPH-DDAPR-RG \
+--cluster-name pitcrewaks \
+--resource-group PITCREW-ERE-RG \
 --mode user \
 --enable-cluster-autoscaler \
 --kubernetes-version 1.17.16 \
@@ -108,8 +124,8 @@ az feature list -o table --query "[?contains(name, 'Microsoft.ContainerService/G
 az provider register --namespace Microsoft.ContainerService
 
 az aks nodepool add --name jhubgpupool \
---cluster-name ddapranaenv \
---resource-group MPH-DDAPR-RG \
+--cluster-name pitcrewaks \
+--resource-group PITCREW-ERE-RG \
 --mode user \
 --enable-cluster-autoscaler \
 --enable-node-public-ip \
@@ -125,19 +141,19 @@ az aks nodepool add --name jhubgpupool \
 --output table
 
 # Kube Upgrade
-az aks nodepool update --resource-group MPH-DDAPR-RG \
-	--cluster-name ddapranaenv \
+az aks nodepool update --cluster-name pitcrewaks \
+	--resource-group PITCREW-ERE-RG \
 	--name jhubuserpool --disable-cluster-autoscaler 
-az aks nodepool update --resource-group MPH-DDAPR-RG \
- 	--cluster-name ddapranaenv \
+az aks nodepool update --cluster-name pitcrewaks \
+	--resource-group PITCREW-ERE-RG \
 	--name jhubuserpool \
 	--enable-cluster-autoscaler \
 	--max-count 20 \
 	--min-count 0
 
 ## Install kubectl
-az aks get-credentials --name ddapranaenv \
-	--resource-group MPH-DDAPR-RG \
+az aks get-credentials --name pitcrewaks \
+	--resource-group PITCREW-ERE-RG \
 	--output table
 kubectl get node
 
@@ -147,7 +163,7 @@ kubectl create clusterrolebinding kubernetes-dashboard \
 --clusterrole=cluster-admin \
 --serviceaccount=kube-system:kubernetes-dashboard \
 --user=clusterUser
-az aks browse --resource-group MPH-DDAPR-RG --name ddapranaenv
+az aks browse --name pitcrewaks --resource-group PITCREW-ERE-RG
 
 
 ## Set up Helm 3
@@ -161,58 +177,57 @@ tar -zxvf helm-v3.1.0.tar.gz
 mv linux-amd64/helm /usr/local/bin/helm
 
 ## Setup a separate ACR
-ACR_NAME=ddapracr
+ACR_NAME=pitcrewacr
 az acr create \
 	--name $ACR_NAME \
-	--resource-group MPH-DDAPR-RG \
+	--resource-group PITCREW-ERE-RG \
 	--sku Standard \
 	--admin-enabled true \
 	--location eastus \
 	--output table
 az acr login --name $ACR_NAME
-AKS_RESOURCE_GROUP=MPH-DDAPR-RG
-AKS_CLUSTER_NAME=ddapranaenv
-ACR_RESOURCE_GROUP=MPH-DDAPR-RG
+AKS_RESOURCE_GROUP=PITCREW-ERE-RG
+AKS_CLUSTER_NAME=pitcrewaks
+ACR_RESOURCE_GROUP=PITCREW-ERE-RG
 CLIENT_ID=$(az aks show --resource-group $AKS_RESOURCE_GROUP --name $AKS_CLUSTER_NAME --query "servicePrincipalProfile.clientId" --output tsv)
 ACR_ID=$(az acr show --name $ACR_NAME --resource-group $ACR_RESOURCE_GROUP --query "id" --output tsv)
 az role assignment create --assignee $CLIENT_ID --role acrpull --scope $ACR_ID
 
 ## Setup Jupyterhub
-kubectl delete namespace ddapr-jhub
+kubectl delete namespace pitcrew-jhub
 kubectl delete pv --all
 # Deploy PVC
-JHUB_NAMESPACE=ddapr-jhub
+JHUB_NAMESPACE=pitcrew-jhub
 kubectl create namespace $JHUB_NAMESPACE
-ADLS_ACCOUNT_NAME=ddaprstorage
-ADLS_ACCOUNT_KEY=o+mPZkOmSjI+E2ThAVKJ/66yJyGjqjV+Q12dZVENxQUqf5+T0xoTDzvxN+yJi75SRJJGB+Ct8LT9C+J3QqBt7g==
+ADLS_ACCOUNT_NAME=pitcrewstorage
+ADLS_ACCOUNT_KEY=hB8d+muYJy4yUey6P4fWLEhi/iexF20seH2AIWGbw0jNq89amrbyAfYegTuTWWlXKVVGEqWpFysQJfpuOHsJbA==
 kubectl create secret generic azure-fileshare-secret --from-literal=azurestorageaccountname=$ADLS_ACCOUNT_NAME --from-literal=azurestorageaccountkey=$ADLS_ACCOUNT_KEY -n $JHUB_NAMESPACE
 kubectl apply -f pvc-pv-jhub.yaml
 
 # Pull jupyterhub helm chart
 helm repo add jupyterhub https://jupyterhub.github.io/helm-chart/
 helm repo update
-helm fetch jupyterhub/jupyterhub --version 0.9.0
+helm fetch jupyterhub/jupyterhub --version 0.9.1
 
 # Build customize k8s-hub image
 cd jupyter-k8s-hub
-docker build -t ddapracr.azurecr.io/k8s-hub:latest .
-docker push ddapracr.azurecr.io/k8s-hub:latest
+docker build -t pitcrewacr.azurecr.io/k8s-hub:latest .
+docker push pitcrewacr.azurecr.io/k8s-hub:latest
 cd ..
 cd k8s-hub-novnc-desktop
-docker build -t ddapracr.azurecr.io/novnc-notebook:latest .
-docker push ddapracr.azurecr.io/novnc-notebook:latest
+docker build -t pitcrewacr.azurecr.io/novnc-notebook:latest .
+docker push pitcrewacr.azurecr.io/novnc-notebook:latest
 cd ..
 
 ## Create ACR pullsecret
-ACR_NAME=ddapracr
-AKS_RESOURCE_GROUP=MPH-DDAPR-RG
-AKS_CLUSTER_NAME=ddapranaenv
-ACR_RESOURCE_GROUP=MPH-DDAPR-RG
-SERVICE_PRINCIPLE_ID=51e9d870-c881-4d7a-8c33-48ca617eac52
+ACR_NAME=pitcrewacr
+AKS_RESOURCE_GROUP=PITCREW-ERE-RG
+AKS_CLUSTER_NAME=pitcrewaks
+ACR_RESOURCE_GROUP=PITCREW-ERE-RG
 ACR_ID=$(az acr show --name $ACR_NAME --resource-group $ACR_RESOURCE_GROUP --query "id" --output tsv)
 SP_PASSWD=$(az ad sp create-for-rbac --name http://$SERVICE_PRINCIPLE_ID --scopes $ACR_ID --role acrpull --query password --output tsv)
 SP_APP_ID=$(az ad sp show --id http://$SERVICE_PRINCIPLE_ID --query appId --output tsv)
-kubectl create secret docker-registry ddapracr-secret \
+kubectl create secret docker-registry pitcrewacr-secret \
     --namespace $JHUB_NAMESPACE \
     --docker-server=$ACR_NAME.azurecr.io \
     --docker-username=$SP_APP_ID \
@@ -221,19 +236,17 @@ kubectl create secret docker-registry ddapracr-secret \
 ## Create service account for spark
 kubectl delete clusterrolebinding spark-role-binding
 kubectl --namespace $JHUB_NAMESPACE create serviceaccount spark-admin
-kubectl create clusterrolebinding spark-role-binding \
-	--clusterrole cluster-admin \
-	--serviceaccount=$JHUB_NAMESPACE:spark-admin
+kubectl create clusterrolebinding spark-role-binding --clusterrole cluster-admin --serviceaccount=$JHUB_NAMESPACE:spark-admin
 
 # Build customized jupyterhub chart
 ## Install jupyterhub
-helm upgrade --install ddapr-jhub jupyterhub/jupyterhub \
+helm upgrade --install pitcrew-jhub jupyterhub/jupyterhub \
 	--namespace $JHUB_NAMESPACE  \
 	--version=0.9.1 \
 	--values config.yaml \
 	--timeout=5000s
 
-kubectl -n ddapr-jhub get pods | grep Pending | cut -d' ' -f 1 | xargs kubectl -n ddapr-jhub delete pod
+kubectl -n pitcrew-jhub get pods | grep Pending | cut -d' ' -f 1 | xargs kubectl -n pitcrew-jhub delete pod
 
 ## Install Gitlab
 ## Need DNS service configured first https://docs.gitlab.com/charts/installation/deployment.html

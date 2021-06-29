@@ -1,0 +1,64 @@
+{
+    "apiVersion": "v1",
+    "kind": "Namespace",
+    "metadata": {
+        "annotations": {
+            "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"v1\",\"kind\":\"Namespace\",\"metadata\":{\"annotations\":{},\"labels\":{\"control-plane\":\"kubeflow\",\"istio-injection\":\"enabled\"},\"name\":\"kubeflow\"}}\n"
+        },
+        "creationTimestamp": "2021-04-17T16:20:58Z",
+        "deletionTimestamp": "2021-04-17T17:07:32Z",
+        "labels": {
+            "control-plane": "kubeflow",
+            "istio-injection": "enabled",
+            "katib-metricscollector-injection": "enabled"
+        },
+        "name": "kubeflow",
+        "resourceVersion": "11576550",
+        "selfLink": "/api/v1/namespaces/kubeflow",
+        "uid": "f55ce26a-b64a-4574-8540-47d64affb7f9"
+    },
+    "spec": {
+        "finalizers": [
+        ]
+    },
+    "status": {
+        "conditions": [
+            {
+                "lastTransitionTime": "2021-04-17T17:07:40Z",
+                "message": "All resources successfully discovered",
+                "reason": "ResourcesDiscovered",
+                "status": "False",
+                "type": "NamespaceDeletionDiscoveryFailure"
+            },
+            {
+                "lastTransitionTime": "2021-04-17T17:07:40Z",
+                "message": "All legacy kube types successfully parsed",
+                "reason": "ParsedGroupVersions",
+                "status": "False",
+                "type": "NamespaceDeletionGroupVersionParsingFailure"
+            },
+            {
+                "lastTransitionTime": "2021-04-17T17:07:40Z",
+                "message": "All content successfully deleted, may be waiting on finalization",
+                "reason": "ContentDeleted",
+                "status": "False",
+                "type": "NamespaceDeletionContentFailure"
+            },
+            {
+                "lastTransitionTime": "2021-04-17T17:07:40Z",
+                "message": "Some resources are remaining: kfdefs.kfdef.apps.kubeflow.org has 1 resource instances",
+                "reason": "SomeResourcesRemain",
+                "status": "True",
+                "type": "NamespaceContentRemaining"
+            },
+            {
+                "lastTransitionTime": "2021-04-17T17:07:40Z",
+                "message": "Some content in the namespace has finalizers remaining: kfdef-finalizer.kfdef.apps.kubeflow.org in 1 resource instances",
+                "reason": "SomeFinalizersRemain",
+                "status": "True",
+                "type": "NamespaceFinalizersRemaining"
+            }
+        ],
+        "phase": "Terminating"
+    }
+}
