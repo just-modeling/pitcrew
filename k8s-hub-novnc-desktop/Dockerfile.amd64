@@ -115,6 +115,9 @@ RUN sed -i 's#app/locale/#novnc/app/locale/#' /src/web/dist/static/novnc/app/ui.
 ################################################################################
 FROM system
 LABEL maintainer="fcwu.tw@gmail.com"
+ARG NB_USER="jovyan"
+ARG NB_UID="1000"
+ARG NB_GID="100"
 
 RUN apt-get update && apt-get install -y --no-install-recommends vim git ssh
 

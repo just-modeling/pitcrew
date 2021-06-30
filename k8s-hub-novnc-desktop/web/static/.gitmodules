@@ -1,0 +1,2 @@
+[submodule "novnc"]
+	branch = k8s-hub-novnc-desktop

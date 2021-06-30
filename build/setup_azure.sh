@@ -199,8 +199,8 @@ docker build -t ddapracr.azurecr.io/k8s-hub:latest .
 docker push ddapracr.azurecr.io/k8s-hub:latest
 cd ..
 cd k8s-hub-novnc-desktop
-docker build -t ddapracr.azurecr.io/novnc-notebook:latest .
-docker push ddapracr.azurecr.io/novnc-notebook:latest
+docker build -t ddapracr.azurecr.io/novnc-notebook:2.0.0 .
+docker push ddapracr.azurecr.io/novnc-notebook:2.0.0
 cd ..
 
 ## Create ACR pullsecret
