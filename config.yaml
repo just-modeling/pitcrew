@@ -7,7 +7,7 @@ hub:
   extraEnv:
     AAD_TENANT_ID: "50225b46-8a5b-4a27-b140-349ac9c7b83c"
   image: 
-    name: ddapracr.azurecr.io/k8s-hub
+    name: pitcrewacr.azurecr.io/k8s-hub
     tag: latest
   imagePullPolicy: 'Always'
   nodeSelector:
@@ -16,6 +16,7 @@ hub:
     jupyterlab: |
       c.JupyterHub.authenticator_class = 'dummyauthenticator.DummyAuthenticator'
       c.KubeSpawner.start_timeout = 3600
+      c.JupyterHub.logo_file = '/usr/local/share/jupyterhub/static/images/imageedit_1_6604815272.png'
     admin_user: |
       c.JupyterHub.admin_access = True
       c.Authenticator.admin_users = {'apiuser','ziang'}
@@ -30,10 +31,10 @@ hub:
               if True:
                   # construct the project space list
                   p_list.append(
-                      {'display_name':'Evolution X','description': 'K8s NOVNC Desktop. Include JupyterLab, RStudio, VSCode, pgAdmin4, Apache Spark. 2 CPUs, 6GB RAM', 'default': True,
+                      {'display_name':'Evolution X','description': 'Linux Desktop. Include Sklearn, RStudio, VSCode, pgAdmin4, Apache Spark. 2 CPUs, 6GB RAM', 'default': True,
                        'kubespawner_override': 
                          {
-                              'image': 'ddapracr.azurecr.io/novnc-notebook:latest',
+                              'image': 'pitcrewacr.azurecr.io/novnc-notebook:2.0.0',
                               'cmd': ['startup'],
                               'image_pull_policy': pull_policy,
                               'cpu_limit': 2,
@@ -57,7 +58,7 @@ hub:
                               'extra_containers': [
                                 {
                                   'name': 'jupyterlab',
-                                  'image': 'ddapracr.azurecr.io/datascience-notebook:latest',
+                                  'image': 'pitcrewacr.azurecr.io/datascience-notebook:latest',
                                   'command': ['start-notebook.sh'],
                                   'image_pull_policy': pull_policy,
                                   'volume_mounts': [
@@ -67,7 +68,7 @@ hub:
                                 },
                                 {
                                   'name': 'rstudio',
-                                  'image': 'ddapracr.azurecr.io/rstudio:latest',
+                                  'image': 'pitcrewacr.azurecr.io/rstudio:latest',
                                   'image_pull_policy': pull_policy,
                                   'volume_mounts': [
                                     {'name': 'project-claim','mountPath': '/home/jovyan/shared'},
@@ -76,7 +77,7 @@ hub:
                                 },
                                 {
                                   'name': 'spark',
-                                  'image': 'ddapracr.azurecr.io/pyspark-notebook:v2.4.5',
+                                  'image': 'pitcrewacr.azurecr.io/pyspark-notebook:v2.4.5',
                                   'command': ['start-notebook.sh'],
                                   'image_pull_policy': pull_policy,
                                   'volume_mounts': [
@@ -89,7 +90,7 @@ hub:
                                 },
                                 {
                                   'name': 'theia-vscode',
-                                  'image': 'ddapracr.azurecr.io/theia-vscode:latest',
+                                  'image': 'pitcrewacr.azurecr.io/theia-vscode:latest',
                                   'image_pull_policy': pull_policy,
                                   'volume_mounts': [
                                     {'name': 'project-claim','mountPath': '/home/jovyan/shared'},
@@ -98,7 +99,7 @@ hub:
                                 },
                                 {
                                   'name': 'pgadmin4',
-                                  'image': 'ddapracr.azurecr.io/pgadmin4:latest',
+                                  'image': 'pitcrewacr.azurecr.io/pgadmin4:latest',
                                   'image_pull_policy': pull_policy,
                                   'command': ['/entrypoint.sh'],
                                   'env': [{'name':'PGADMIN_DEFAULT_EMAIL', 'value':'admin@pgadmin4.dii.hhs.info'}, 
@@ -111,10 +112,10 @@ hub:
                       }
                   )
                   p_list.append(
-                      {'display_name':'Evolution GT','description': 'K8s NOVNC Desktop. Include JupyterLab, RStudio. 4 CPUs, 32GB RAM, NVIDIA Tesla K80 12GB', 'default': False,
+                      {'display_name':'Evolution GT','description': 'Linux Desktop. Include Sklearn, RStudio. 4 CPUs, 32GB RAM, NVIDIA Tesla K80 12GB', 'default': False,
                        'kubespawner_override': 
                          {
-                              'image': 'ddapracr.azurecr.io/novnc-notebook:latest',
+                              'image': 'pitcrewacr.azurecr.io/novnc-notebook:2.0.0',
                               'cmd': ['startup'],
                               'image_pull_policy': pull_policy,
                               'cpu_limit': 4,
@@ -140,7 +141,7 @@ hub:
                               'extra_containers': [
                                 {
                                   'name': 'jupyterlab',
-                                  'image': 'ddapracr.azurecr.io/tensorflow-notebook:latest',
+                                  'image': 'pitcrewacr.azurecr.io/tensorflow-notebook:2.4.1',
                                   'command': ['start-notebook.sh'],
                                   'image_pull_policy': pull_policy,
                                   'volume_mounts': [
@@ -150,7 +151,7 @@ hub:
                                 },
                                 {
                                   'name': 'rstudio',
-                                  'image': 'ddapracr.azurecr.io/rstudio:latest',
+                                  'image': 'pitcrewacr.azurecr.io/rstudio:latest',
                                   'image_pull_policy': pull_policy,
                                   'volume_mounts': [
                                     {'name': 'project-claim','mountPath': '/home/jovyan/shared'},
@@ -159,7 +160,7 @@ hub:
                                 },
                                 {
                                   'name': 'spark',
-                                  'image': 'ddapracr.azurecr.io/pyspark-notebook:v2.4.5',
+                                  'image': 'pitcrewacr.azurecr.io/pyspark-notebook:v2.4.5',
                                   'command': ['start-notebook.sh'],
                                   'image_pull_policy': pull_policy,
                                   'volume_mounts': [
@@ -172,7 +173,7 @@ hub:
                                 },
                                 {
                                   'name': 'theia-vscode',
-                                  'image': 'ddapracr.azurecr.io/theia-vscode:latest',
+                                  'image': 'pitcrewacr.azurecr.io/theia-vscode:latest',
                                   'image_pull_policy': pull_policy,
                                   'volume_mounts': [
                                     {'name': 'project-claim','mountPath': '/home/jovyan/shared'},
@@ -181,7 +182,91 @@ hub:
                                 },
                                 {
                                   'name': 'pgadmin4',
-                                  'image': 'ddapracr.azurecr.io/pgadmin4:latest',
+                                  'image': 'pitcrewacr.azurecr.io/pgadmin4:latest',
+                                  'image_pull_policy': pull_policy,
+                                  'command': ['/entrypoint.sh'],
+                                  'env': [{'name':'PGADMIN_DEFAULT_EMAIL', 'value':'admin@pgadmin4.dii.hhs.info'}, 
+                                          {'name':'PGADMIN_DEFAULT_PASSWORD', 'value':'admin'}, 
+                                          {'name':'PGADMIN_LISTEN_PORT', 'value':'5050'},
+                                          {'name':'PGADMIN_CONFIG_SERVER_MODE','value':'False'}]
+                                },
+                              ]
+                          }
+                      }
+                  )
+
+              p_list.append(
+                      {'display_name':'NGA Geospatial Data Analysis','description': 'Linux Desktop. Include Sklearn, GeoPandas, OSMNX, ArcGIS SDK, PostgresGIS and Apache Spark. 4 CPUs, 32GB RAM, NVIDIA Tesla K80 12GB', 'default': False,
+                       'kubespawner_override': 
+                         {
+                              'image': 'pitcrewacr.azurecr.io/novnc-notebook:2.0.0',
+                              'cmd': ['startup'],
+                              'image_pull_policy': pull_policy,
+                              'cpu_limit': 4,
+                              'cpu_guarantee': 2,
+                              'mem_limit': '32G',
+                              'mem_guarantee': '8G',
+                              'node_selector': {'dedicate.pool': 'gpupool'},
+                              'extra_resource_guarantees' : {"nvidia.com/gpu": 1},
+                              'extra_resource_limits' : {"nvidia.com/gpu": 1},
+                              'volumes': [
+                                {'name': 'project-claim','persistentVolumeClaim': {'claimName': 'pvc-test-jhub-project'}},
+                                {'name': 'user-claim','persistentVolumeClaim': {'claimName': 'pvc-test-jhub-user'}},
+                              ],
+                              'volume_mounts': [
+                                {'name': 'project-claim','mountPath': '/home/jovyan/Desktop/shared'},
+                                {'name': 'user-claim','mountPath': '/home/jovyan/Desktop/work'}
+                              ],
+                              'singleuser_extra_pod_config': {
+                                'service_account_name': 'spark-admin',
+                                'automount_service_account_token': True,
+                                'hostAliases': [{'ip': '127.0.0.1', 'hostnames':['jupyter.ds.ksmc.container','rstudio.ds.ksmc.container','vscode.appdev.ksmc.container','pgadmin4.de.ksmc.container','spark.ds.ksmc.container']}]
+                              },
+                              'extra_containers': [
+                                {
+                                  'name': 'jupyterlab',
+                                  'image': 'pitcrewacr.azurecr.io/gis-notebook:latest',
+                                  'command': ['start-notebook.sh'],
+                                  'image_pull_policy': pull_policy,
+                                  'volume_mounts': [
+                                    {'name': 'project-claim','mountPath': '/home/jovyan/shared'},
+                                    {'name': 'user-claim','mountPath': '/home/jovyan/work'}
+                                  ],
+                                },
+                                {
+                                  'name': 'rstudio',
+                                  'image': 'pitcrewacr.azurecr.io/rstudio:latest',
+                                  'image_pull_policy': pull_policy,
+                                  'volume_mounts': [
+                                    {'name': 'project-claim','mountPath': '/home/jovyan/shared'},
+                                    {'name': 'user-claim','mountPath': '/home/jovyan/work'}
+                                  ],
+                                },
+                                {
+                                  'name': 'spark',
+                                  'image': 'pitcrewacr.azurecr.io/pyspark-notebook:v2.4.5',
+                                  'command': ['start-notebook.sh'],
+                                  'image_pull_policy': pull_policy,
+                                  'volume_mounts': [
+                                    {'name': 'project-claim','mountPath': '/home/jovyan/shared'},
+                                    {'name': 'user-claim','mountPath': '/home/jovyan/work'}
+                                  ],
+                                  'env': [
+                                    {'name': 'MY_POD_IP', 'valueFrom': { 'fieldRef' : { 'fieldPath' : 'status.podIP' } } }
+                                  ]
+                                },
+                                {
+                                  'name': 'theia-vscode',
+                                  'image': 'pitcrewacr.azurecr.io/theia-vscode:latest',
+                                  'image_pull_policy': pull_policy,
+                                  'volume_mounts': [
+                                    {'name': 'project-claim','mountPath': '/home/jovyan/shared'},
+                                    {'name': 'user-claim','mountPath': '/home/jovyan/work'}
+                                  ],
+                                },
+                                {
+                                  'name': 'pgadmin4',
+                                  'image': 'pitcrewacr.azurecr.io/pgadmin4:latest',
                                   'image_pull_policy': pull_policy,
                                   'command': ['/entrypoint.sh'],
                                   'env': [{'name':'PGADMIN_DEFAULT_EMAIL', 'value':'admin@pgadmin4.dii.hhs.info'}, 
@@ -207,6 +292,8 @@ cull:
 scheduling:
   userScheduler:
     enabled: true
+    nodeSelector:
+      dedicate.pool: apppool
   podPriority:
     enabled: true
     # globalDefault: false
@@ -230,6 +317,6 @@ prePuller:
 proxy:
   nodeSelector:
     dedicate.pool: apppool
-  secretToken: 98a089a34637d725efa49d780b2d324428211a81a51a30913985793507f086d8
+  secretToken: 98a089a34637d725efa49d780b2d324428211a81a51a30913985793507f086d9
   https:
     enabled: false

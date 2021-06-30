@@ -1,0 +1,62 @@
+{
+    "apiVersion": "v1",
+    "kind": "Namespace",
+    "metadata": {
+        "annotations": {
+            "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"v1\",\"kind\":\"Namespace\",\"metadata\":{\"annotations\":{},\"labels\":{\"kustomize.component\":\"cluster-local-gateway\"},\"name\":\"istio-system\"}}\n"
+        },
+        "creationTimestamp": "2021-04-17T01:40:37Z",
+        "deletionTimestamp": "2021-04-17T04:38:21Z",
+        "labels": {
+            "kustomize.component": "cluster-local-gateway"
+        },
+        "name": "istio-system",
+        "resourceVersion": "11371381",
+        "selfLink": "/api/v1/namespaces/istio-system",
+        "uid": "d2b7eba9-953d-450a-baf8-a44d64186171"
+    },
+    "spec": {
+        "finalizers": [
+        ]
+    },
+    "status": {
+        "conditions": [
+            {
+                "lastTransitionTime": "2021-04-17T04:38:26Z",
+                "message": "Discovery failed for some groups, 1 failing: unable to retrieve the complete list of server APIs: webhook.cert-manager.io/v1beta1: the server is currently unable to handle the request",
+                "reason": "DiscoveryFailed",
+                "status": "True",
+                "type": "NamespaceDeletionDiscoveryFailure"
+            },
+            {
+                "lastTransitionTime": "2021-04-17T04:38:28Z",
+                "message": "All legacy kube types successfully parsed",
+                "reason": "ParsedGroupVersions",
+                "status": "False",
+                "type": "NamespaceDeletionGroupVersionParsingFailure"
+            },
+            {
+                "lastTransitionTime": "2021-04-17T04:39:06Z",
+                "message": "All content successfully deleted, may be waiting on finalization",
+                "reason": "ContentDeleted",
+                "status": "False",
+                "type": "NamespaceDeletionContentFailure"
+            },
+            {
+                "lastTransitionTime": "2021-04-17T04:39:06Z",
+                "message": "All content successfully removed",
+                "reason": "ContentRemoved",
+                "status": "False",
+                "type": "NamespaceContentRemaining"
+            },
+            {
+                "lastTransitionTime": "2021-04-17T04:38:34Z",
+                "message": "All content-preserving finalizers finished",
+                "reason": "ContentHasNoFinalizers",
+                "status": "False",
+                "type": "NamespaceFinalizersRemaining"
+            }
+        ],
+        "phase": "Terminating"
+    }
+}
