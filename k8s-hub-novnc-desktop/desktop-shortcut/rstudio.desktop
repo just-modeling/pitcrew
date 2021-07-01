@@ -1,7 +1,7 @@
 [Desktop Entry]
 Encoding=UTF-8
 Name=RStudio
-Exec=/usr/bin/firefox http://rstudio.ds.ksmc.container:8082
+Exec=/usr/bin/firefox http://rstudio.ds.nga.container:8082
 Type=Application
 Terminal=false
 Icon=/etc/app-icons/rstudio_desktop.png

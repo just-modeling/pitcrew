@@ -53,7 +53,7 @@ hub:
                               'singleuser_extra_pod_config': {
                                 'service_account_name': 'spark-admin',
                                 'automount_service_account_token': True,
-                                'hostAliases': [{'ip': '127.0.0.1', 'hostnames':['jupyter.ds.ksmc.container','rstudio.ds.ksmc.container','vscode.appdev.ksmc.container','pgadmin4.de.ksmc.container','spark.ds.ksmc.container']}]
+                                'hostAliases': [{'ip': '127.0.0.1', 'hostnames':['jupyter.ds.nga.container','rstudio.ds.nga.container','vscode.appdev.nga.container','pgadmin4.de.nga.container','spark.ds.nga.container']}]
                               },
                               'extra_containers': [
                                 {
@@ -136,7 +136,7 @@ hub:
                               'singleuser_extra_pod_config': {
                                 'service_account_name': 'spark-admin',
                                 'automount_service_account_token': True,
-                                'hostAliases': [{'ip': '127.0.0.1', 'hostnames':['jupyter.ds.ksmc.container','rstudio.ds.ksmc.container','vscode.appdev.ksmc.container','pgadmin4.de.ksmc.container','spark.ds.ksmc.container']}]
+                                'hostAliases': [{'ip': '127.0.0.1', 'hostnames':['jupyter.ds.nga.container','rstudio.ds.nga.container','vscode.appdev.nga.container','pgadmin4.de.nga.container','spark.ds.nga.container']}]
                               },
                               'extra_containers': [
                                 {
@@ -202,10 +202,10 @@ hub:
                               'image': 'pitcrewacr.azurecr.io/novnc-notebook:2.0.0',
                               'cmd': ['startup'],
                               'image_pull_policy': pull_policy,
-                              'cpu_limit': 4,
+                              'cpu_limit': 6,
                               'cpu_guarantee': 2,
-                              'mem_limit': '32G',
-                              'mem_guarantee': '8G',
+                              'mem_limit': '50G',
+                              'mem_guarantee': '22G',
                               'node_selector': {'dedicate.pool': 'gpupool'},
                               'extra_resource_guarantees' : {"nvidia.com/gpu": 1},
                               'extra_resource_limits' : {"nvidia.com/gpu": 1},
@@ -220,7 +220,7 @@ hub:
                               'singleuser_extra_pod_config': {
                                 'service_account_name': 'spark-admin',
                                 'automount_service_account_token': True,
-                                'hostAliases': [{'ip': '127.0.0.1', 'hostnames':['jupyter.ds.ksmc.container','rstudio.ds.ksmc.container','vscode.appdev.ksmc.container','pgadmin4.de.ksmc.container','spark.ds.ksmc.container']}]
+                                'hostAliases': [{'ip': '127.0.0.1', 'hostnames':['jupyter.ds.nga.container','rstudio.ds.nga.container','vscode.appdev.nga.container','pgadmin4.de.nga.container','spark.ds.nga.container']}]
                               },
                               'extra_containers': [
                                 {

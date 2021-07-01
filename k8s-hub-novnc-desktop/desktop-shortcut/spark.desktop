@@ -1,7 +1,7 @@
 [Desktop Entry]
 Encoding=UTF-8
 Name=Apache Spark
-Exec=/usr/bin/firefox http://spark.ds.ksmc.container:8083
+Exec=/usr/bin/firefox http://spark.ds.nga.container:8083
 Type=Application
 Terminal=false
 Icon=/etc/app-icons/apache-spark.png
