@@ -147,7 +147,7 @@ export default {
         let url = 'static/vnc.html?'
         url += 'autoconnect=1&'
         url += `host=${hostname}&port=${port}&`
-        url += `path=${websockifyPath}&title=novnc2&`
+        url += `path=${websockifyPath}&title=Pitcrew Analytics&`
         url += `logging=warn`
         this.$refs.vncFrame.setAttribute('src', url)
       }
