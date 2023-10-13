@@ -5,7 +5,7 @@ az account set -s 'Azure subscription 1'
 ## Service Principle ID
 TENANT_ID=56b3f762-b01e-4e87-be31-e4feb4fade9d
 SERVICE_PRINCIPLE_ID=8aeeb2cf-0fc0-4254-9bce-7b6aba7f7e02
-SERVICE_PRINCIPLE_SECRET=.~8KjCWVAy0RtYMH-4g~-H746MU3ZlYdMm
+SERVICE_PRINCIPLE_SECRET=x.k8Q~XSwwvXzpBrU~2u8u~-yhzOxAH6HGAR.cRU
 
 ## Create Vnet and subnet for AKS
 az network vnet create \
@@ -28,7 +28,7 @@ az aks create --name pitcrewaks \
 --node-count 1 \
 --node-vm-size Standard_D2s_v3 \
 --enable-vmss \
---kubernetes-version 1.17.16 \
+--kubernetes-version 1.26.6 \
 --load-balancer-sku standard \
 --vm-set-type VirtualMachineScaleSets \
 --vnet-subnet-id $SUBNET_ID \
@@ -40,7 +40,7 @@ az aks nodepool add --name systempool \
 --cluster-name pitcrewaks \
 --resource-group PITCREW-ERE-RG \
 --enable-node-public-ip \
---kubernetes-version 1.17.16 \
+--kubernetes-version 1.26.6 \
 --node-taints CriticalAddonsOnly=true:NoSchedule \
 --mode System \
 --node-count 1 \
@@ -49,7 +49,7 @@ az aks nodepool add --name systempool \
 --output table
 
 # Delete default nodepool pool0
-az aks nodepool delete --name jhubcompute \
+az aks nodepool delete --name nodepool1 \
 --cluster-name pitcrewaks \
 --resource-group PITCREW-ERE-RG \
 --output table
@@ -61,7 +61,7 @@ az aks nodepool add --name apppool \
 --mode user \
 --enable-cluster-autoscaler \
 --enable-node-public-ip \
---kubernetes-version 1.17.16 \
+--kubernetes-version 1.26.6 \
 --node-count 1 \
 --max-count 4 \
 --min-count 0 \
@@ -77,7 +77,7 @@ az aks nodepool add --name jhubuserpool \
 --mode user \
 --enable-cluster-autoscaler \
 --enable-node-public-ip \
---kubernetes-version 1.17.16 \
+--kubernetes-version 1.26.6 \
 --node-count 0 \
 --max-count 20 \
 --min-count 0 \
@@ -94,7 +94,7 @@ az aks nodepool add --name kfpipeline \
 --mode user \
 --enable-cluster-autoscaler \
 --enable-node-public-ip \
---kubernetes-version 1.17.16 \
+--kubernetes-version 1.26.6 \
 --node-count 0 \
 --max-count 10 \
 --min-count 0 \
@@ -109,7 +109,7 @@ az aks nodepool add --name sparkpool \
 --resource-group PITCREW-ERE-RG \
 --mode user \
 --enable-cluster-autoscaler \
---kubernetes-version 1.17.16 \
+--kubernetes-version 1.26.6 \
 --node-count 0 \
 --max-count 20 \
 --min-count 0 \
@@ -129,7 +129,7 @@ az aks nodepool add --name jhubgpupool \
 --mode user \
 --enable-cluster-autoscaler \
 --enable-node-public-ip \
---kubernetes-version 1.17.16 \
+--kubernetes-version 1.26.6 \
 --node-count 0 \
 --max-count 2 \
 --min-count 0 \
@@ -205,18 +205,21 @@ kubectl create secret generic azure-fileshare-secret --from-literal=azurestorage
 kubectl apply -f pvc-pv-jhub.yaml
 
 # Pull jupyterhub helm chart
-helm repo add jupyterhub https://jupyterhub.github.io/helm-chart/
+helm repo add jupyterhub https://hub.jupyter.org/helm-chart/
 helm repo update
-helm fetch jupyterhub/jupyterhub --version 0.9.1
 
 # Build customize k8s-hub image
-cd jupyter-k8s-hub
-docker build -t pitcrewacr.azurecr.io/k8s-hub:latest .
-docker push pitcrewacr.azurecr.io/k8s-hub:latest
-cd ..
+# cd jupyter-k8s-hub
+# docker build -t pitcrewacr.azurecr.io/k8s-hub:1.2.0 .
+# docker push pitcrewacr.azurecr.io/k8s-hub:1.2.0
+# cd ..
+# cd k8s-hub-novnc-desktop
+# docker build -t pitcrewacr.azurecr.io/novnc-notebook:2.0.0 .
+# docker push pitcrewacr.azurecr.io/novnc-notebook:2.0.0
+# cd ..
 cd k8s-hub-novnc-desktop
-docker build -t pitcrewacr.azurecr.io/novnc-notebook:2.0.0 .
-docker push pitcrewacr.azurecr.io/novnc-notebook:2.0.0
+docker build -t pitcrewacr.azurecr.io/novnc-notebook:latest .
+docker push pitcrewacr.azurecr.io/novnc-notebook:latest
 cd ..
 
 ## Create ACR pullsecret
@@ -240,9 +243,10 @@ kubectl create clusterrolebinding spark-role-binding --clusterrole cluster-admin
 
 # Build customized jupyterhub chart
 ## Install jupyterhub
-helm upgrade --install pitcrew-jhub jupyterhub/jupyterhub \
+helm upgrade --cleanup-on-fail \
+	--install pitcrew-jhub jupyterhub/jupyterhub \
 	--namespace $JHUB_NAMESPACE  \
-	--version=0.9.1 \
+	--version=3.1.0 \
 	--values config.yaml \
 	--timeout=5000s
 

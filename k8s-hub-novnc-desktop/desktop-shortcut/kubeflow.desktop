@@ -1,7 +1,7 @@
 [Desktop Entry]
 Encoding=UTF-8
 Name=Kubeflow
-Exec=/usr/bin/firefox http://52.191.225.234
+Exec=/usr/bin/firefox http://pitcrewkubeflow.eastus.cloudapp.azure.com
 Type=Application
 Terminal=false
 Icon=/etc/app-icons/kubeflow_desktop.png
