@@ -57,7 +57,7 @@ hub:
                 'volume_mounts': [
                   {'name': 'project-claim','mountPath': '/home/jovyan/shared'},
                   {'name': 'user-claim','mountPath': '/home/jovyan/work'},
-                  {'name': 'job-claim','mountPath': '/home/jovyan/Desktop/pipeline-run'}
+                  {'name': 'job-claim','mountPath': '/home/jovyan/pipeline-run'}
                 ],
               },
               {
@@ -67,7 +67,7 @@ hub:
                 'volume_mounts': [
                   {'name': 'project-claim','mountPath': '/home/jovyan/shared'},
                   {'name': 'user-claim','mountPath': '/home/jovyan/work'},
-                  {'name': 'job-claim','mountPath': '/home/jovyan/Desktop/pipeline-run'}
+                  {'name': 'job-claim','mountPath': '/home/jovyan/pipeline-run'}
                 ],
               },
               {
@@ -78,7 +78,7 @@ hub:
                 'volume_mounts': [
                   {'name': 'project-claim','mountPath': '/home/jovyan/shared'},
                   {'name': 'user-claim','mountPath': '/home/jovyan/work'},
-                  {'name': 'job-claim','mountPath': '/home/jovyan/Desktop/pipeline-run'}
+                  {'name': 'job-claim','mountPath': '/home/jovyan/pipeline-run'}
                 ],
                 'env': [
                   {'name': 'MY_POD_IP', 'valueFrom': { 'fieldRef' : { 'fieldPath' : 'status.podIP' } } }
@@ -91,7 +91,7 @@ hub:
                 'volume_mounts': [
                   {'name': 'project-claim','mountPath': '/home/jovyan/shared'},
                   {'name': 'user-claim','mountPath': '/home/jovyan/work'},
-                  {'name': 'job-claim','mountPath': '/home/jovyan/Desktop/pipeline-run'}
+                  {'name': 'job-claim','mountPath': '/home/jovyan/pipeline-run'}
                 ],
               },
               {
@@ -146,7 +146,7 @@ hub:
                 'volume_mounts': [
                   {'name': 'project-claim','mountPath': '/home/jovyan/shared'},
                   {'name': 'user-claim','mountPath': '/home/jovyan/work'},
-                  {'name': 'job-claim','mountPath': '/home/jovyan/Desktop/pipeline-run'}
+                  {'name': 'job-claim','mountPath': '/home/jovyan/pipeline-run'}
                 ],
               },
               {
@@ -156,7 +156,7 @@ hub:
                 'volume_mounts': [
                   {'name': 'project-claim','mountPath': '/home/jovyan/shared'},
                   {'name': 'user-claim','mountPath': '/home/jovyan/work'},
-                  {'name': 'job-claim','mountPath': '/home/jovyan/Desktop/pipeline-run'}
+                  {'name': 'job-claim','mountPath': '/home/jovyan/pipeline-run'}
                 ],
               },
               {
@@ -167,7 +167,7 @@ hub:
                 'volume_mounts': [
                   {'name': 'project-claim','mountPath': '/home/jovyan/shared'},
                   {'name': 'user-claim','mountPath': '/home/jovyan/work'},
-                  {'name': 'job-claim','mountPath': '/home/jovyan/Desktop/pipeline-run'}
+                  {'name': 'job-claim','mountPath': '/home/jovyan/pipeline-run'}
                 ],
                 'env': [
                   {'name': 'MY_POD_IP', 'valueFrom': { 'fieldRef' : { 'fieldPath' : 'status.podIP' } } }
@@ -180,7 +180,7 @@ hub:
                 'volume_mounts': [
                   {'name': 'project-claim','mountPath': '/home/jovyan/shared'},
                   {'name': 'user-claim','mountPath': '/home/jovyan/work'},
-                  {'name': 'job-claim','mountPath': '/home/jovyan/Desktop/pipeline-run'}
+                  {'name': 'job-claim','mountPath': '/home/jovyan/pipeline-run'}
                 ],
               },
               {
@@ -199,7 +199,7 @@ hub:
         {
           'display_name':'Mustang Geo',
           'description': 'Linux Desktop. Include Sklearn, GeoPandas, OSMNX, ArcGIS SDK, PostgresGIS, Kubeflow. 2 CPUs, 8GB RAM', 
-          'default': False,
+          'default': True,
           'kubespawner_override': {
             'image': 'pitcrewacr.azurecr.io/novnc-notebook:latest',
             'cmd': ['startup'],
@@ -233,7 +233,7 @@ hub:
                 'volume_mounts': [
                   {'name': 'project-claim','mountPath': '/home/jovyan/shared'},
                   {'name': 'user-claim','mountPath': '/home/jovyan/work'},
-                  {'name': 'job-claim','mountPath': '/home/jovyan/Desktop/pipeline-run'}
+                  {'name': 'job-claim','mountPath': '/home/jovyan/pipeline-run'}
                 ],
               },
               {
@@ -243,7 +243,7 @@ hub:
                 'volume_mounts': [
                   {'name': 'project-claim','mountPath': '/home/jovyan/shared'},
                   {'name': 'user-claim','mountPath': '/home/jovyan/work'},
-                  {'name': 'job-claim','mountPath': '/home/jovyan/Desktop/pipeline-run'}
+                  {'name': 'job-claim','mountPath': '/home/jovyan/pipeline-run'}
                 ],
               },
               {
@@ -254,7 +254,7 @@ hub:
                 'volume_mounts': [
                   {'name': 'project-claim','mountPath': '/home/jovyan/shared'},
                   {'name': 'user-claim','mountPath': '/home/jovyan/work'},
-                  {'name': 'job-claim','mountPath': '/home/jovyan/Desktop/pipeline-run'}
+                  {'name': 'job-claim','mountPath': '/home/jovyan/pipeline-run'}
                 ],
                 'env': [
                   {'name': 'MY_POD_IP', 'valueFrom': { 'fieldRef' : { 'fieldPath' : 'status.podIP' } } }
@@ -267,7 +267,7 @@ hub:
                 'volume_mounts': [
                   {'name': 'project-claim','mountPath': '/home/jovyan/shared'},
                   {'name': 'user-claim','mountPath': '/home/jovyan/work'},
-                  {'name': 'job-claim','mountPath': '/home/jovyan/Desktop/pipeline-run'}
+                  {'name': 'job-claim','mountPath': '/home/jovyan/pipeline-run'}
                 ],
               },
               {
