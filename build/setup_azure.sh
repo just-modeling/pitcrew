@@ -3,9 +3,9 @@ az account list --refresh --output table
 az account set -s 'Pay-As-You-Go - MPH Analytics (Development)'
 
 ## Service Principle ID
-TENANT_ID=50225b46-8a5b-4a27-b140-349ac9c7b83c
-SERVICE_PRINCIPLE_ID=51e9d870-c881-4d7a-8c33-48ca617eac52
-SERVICE_PRINCIPLE_SECRET=tD~-3eYMFNkv.UPFc2583y7XZd2ji~t23-
+TENANT_ID=
+SERVICE_PRINCIPLE_ID=
+SERVICE_PRINCIPLE_SECRET=
 
 ## Create Vnet and subnet for AKS
 az network vnet create \
@@ -131,7 +131,7 @@ az role assignment create --assignee $CLIENT_ID --role acrpull --scope $ACR_ID
 JHUB_NAMESPACE=ddapr-jhub
 kubectl create namespace $JHUB_NAMESPACE
 ADLS_ACCOUNT_NAME=ddaprstorage
-ADLS_ACCOUNT_KEY=o+mPZkOmSjI+E2ThAVKJ/66yJyGjqjV+Q12dZVENxQUqf5+T0xoTDzvxN+yJi75SRJJGB+Ct8LT9C+J3QqBt7g==
+ADLS_ACCOUNT_KEY=
 kubectl create secret generic azure-fileshare-secret --from-literal=azurestorageaccountname=$ADLS_ACCOUNT_NAME --from-literal=azurestorageaccountkey=$ADLS_ACCOUNT_KEY -n $JHUB_NAMESPACE
 kubectl apply -f pvc-pv-jhub.yaml
 
